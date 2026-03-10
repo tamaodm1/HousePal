@@ -1,0 +1,22 @@
+# Flutter
+houseoal/build/
+houseoal/.dart_tool/
+houseoal/.idea/
+houseoal/.flutter-plugins
+houseoal/.flutter-plugins-dependencies
+houseoal/.packages
+houseoal/pubspec.lock
+
+# .NET
+HousePalAPI/bin/
+HousePalAPI/obj/
+
+# IDE
+*.suo
+*.user
+*.vs/
+.vscode/
+
+# OS
+Thumbs.db
+.DS_Store
