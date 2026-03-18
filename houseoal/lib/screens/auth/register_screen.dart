@@ -49,11 +49,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
           phoneNumber: _phoneController.text.trim(),
           password: _passwordController.text,
         );
-        
+
         if (registerResult['success'] != true) {
           throw Exception(registerResult['message'] ?? 'Đăng ký thất bại');
         }
-        
+
         final userData = registerResult['user'] as Map<String, dynamic>;
         final userId = userData['id'] as String;
 
@@ -65,15 +65,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
             description: 'Phòng của ${_nameController.text}',
             userId: userId,
           );
-          
+
           if (houseResult['success'] != true) {
             throw Exception(houseResult['message'] ?? 'Tạo phòng thất bại');
           }
-          
+
           // Cập nhật userData với houseId
           userData['houseId'] = houseResult['houseId'];
           final joinCode = houseResult['joinCode'] as String;
-          
+
           // Lưu user vào local storage
           await AuthService.saveUserFirebase(userData);
 
@@ -83,7 +83,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               context: context,
               barrierDismissible: false,
               builder: (context) => AlertDialog(
-                title: const Text('✅ Tạo Phòng Thành Công'),
+                title: const Text('Tạo phòng thành công'),
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -132,11 +132,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
             joinCode: _joinCodeController.text.trim().toUpperCase(),
             userId: userId,
           );
-          
+
           if (joinResult['success'] != true) {
             throw Exception(joinResult['message'] ?? 'Vào phòng thất bại');
           }
-          
+
           // Cập nhật userData với houseId
           userData['houseId'] = joinResult['houseId'];
           await AuthService.saveUserFirebase(userData);
@@ -144,7 +144,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('✅ Vào phòng thành công!'),
+                content: Text('Vào phòng thành công'),
                 backgroundColor: Colors.green,
                 duration: Duration(seconds: 2),
               ),
@@ -156,7 +156,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('❌ Lỗi: ${e.toString().replaceAll('Exception: ', '')}'),
+              content:
+                  Text('Lỗi: ${e.toString().replaceAll('Exception: ', '')}'),
               backgroundColor: Colors.red,
               duration: const Duration(seconds: 3),
             ),
@@ -165,6 +166,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
       }
     }
+  }
+
+  void _showForgotPasswordDialog() {
+    final emailCtrl = TextEditingController(text: _emailController.text.trim());
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Khôi phục mật khẩu'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: emailCtrl,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(labelText: 'Email đã đăng ký'),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Tính năng reset tự động sẽ có khi chuyển sang Firebase Auth. Hiện tại vui lòng liên hệ admin.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Đóng')),
+        ],
+      ),
+    );
   }
 
   @override
@@ -297,7 +328,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
-                              color: _isCreatingHouse ? AppColors.primary : Colors.transparent,
+                              color: _isCreatingHouse
+                                  ? AppColors.primary
+                                  : Colors.transparent,
                               borderRadius: const BorderRadius.only(
                                 topLeft: Radius.circular(8),
                                 bottomLeft: Radius.circular(8),
@@ -307,7 +340,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               child: Text(
                                 'Tạo Phòng',
                                 style: TextStyle(
-                                  color: _isCreatingHouse ? Colors.white : AppColors.textPrimary,
+                                  color: _isCreatingHouse
+                                      ? Colors.white
+                                      : AppColors.textPrimary,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -321,7 +356,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
-                              color: !_isCreatingHouse ? AppColors.primary : Colors.transparent,
+                              color: !_isCreatingHouse
+                                  ? AppColors.primary
+                                  : Colors.transparent,
                               borderRadius: const BorderRadius.only(
                                 topRight: Radius.circular(8),
                                 bottomRight: Radius.circular(8),
@@ -331,7 +368,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               child: Text(
                                 'Vào Phòng',
                                 style: TextStyle(
-                                  color: !_isCreatingHouse ? Colors.white : AppColors.textPrimary,
+                                  color: !_isCreatingHouse
+                                      ? Colors.white
+                                      : AppColors.textPrimary,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -426,7 +465,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const Spacer(),
                     TextButton(
                       onPressed: () {
-                        // TODO: Navigate to forgot password
+                        _showForgotPasswordDialog();
                       },
                       child: const Text(
                         'Quên mật khẩu?',

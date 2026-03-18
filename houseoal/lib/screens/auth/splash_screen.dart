@@ -2,9 +2,29 @@ import 'package:flutter/material.dart';
 import '../../core/constants/colors.dart';
 import '../../core/constants/text_styles.dart';
 import '../../core/widgets/custom_button.dart';
+import '../../services/auth_service.dart';
 
-class SplashScreen extends StatelessWidget {
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkSession();
+  }
+
+  Future<void> _checkSession() async {
+    final isLoggedIn = await AuthService.isUserLoggedIn();
+    if (!mounted) return;
+    if (isLoggedIn) {
+      Navigator.pushReplacementNamed(context, '/home');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

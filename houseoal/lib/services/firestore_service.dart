@@ -27,9 +27,56 @@ class FirestoreService {
     return result;
   }
 
+  // ============ NOTIFICATIONS ============
+
+  static Future<void> createNotification({
+    required String recipientUserId,
+    required String houseId,
+    required String title,
+    required String message,
+    String type = 'info', // chore, expense, debt, info
+    String? relatedId,
+  }) async {
+    await _db.collection('notifications').add({
+      'recipientUserId': recipientUserId,
+      'houseId': houseId,
+      'title': title,
+      'message': message,
+      'type': type,
+      'relatedId': relatedId,
+      'isRead': false,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  static Future<List<Map<String, dynamic>>> getNotificationsByUser(
+      String userId) async {
+    final query = await _db
+        .collection('notifications')
+        .where('recipientUserId', isEqualTo: userId)
+        .get();
+    final items = query.docs
+        .map((doc) => _convertTimestamps({'id': doc.id, ...doc.data()}))
+        .toList();
+    items.sort((a, b) {
+      final aDate = a['createdAt']?.toString() ?? '';
+      final bDate = b['createdAt']?.toString() ?? '';
+      return bDate.compareTo(aDate);
+    });
+    return items;
+  }
+
+  static Future<void> markNotificationRead(String notificationId) async {
+    await _db.collection('notifications').doc(notificationId).update({
+      'isRead': true,
+      'readAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   // ============ USERS ============
-  
-  static Future<void> createUser(String userId, Map<String, dynamic> userData) async {
+
+  static Future<void> createUser(
+      String userId, Map<String, dynamic> userData) async {
     await _db.collection('users').doc(userId).set({
       ...userData,
       'createdAt': FieldValue.serverTimestamp(),
@@ -45,7 +92,8 @@ class FirestoreService {
     return null;
   }
 
-  static Future<void> updateUser(String userId, Map<String, dynamic> data) async {
+  static Future<void> updateUser(
+      String userId, Map<String, dynamic> data) async {
     await _db.collection('users').doc(userId).update({
       ...data,
       'updatedAt': FieldValue.serverTimestamp(),
@@ -53,7 +101,7 @@ class FirestoreService {
   }
 
   // ============ HOUSES ============
-  
+
   static Future<String> createHouse(Map<String, dynamic> houseData) async {
     final docRef = await _db.collection('houses').add({
       ...houseData,
@@ -66,7 +114,8 @@ class FirestoreService {
   static Future<Map<String, dynamic>?> getHouse(String houseId) async {
     final doc = await _db.collection('houses').doc(houseId).get();
     if (doc.exists) {
-      return _convertTimestamps({'id': doc.id, ...doc.data() as Map<String, dynamic>});
+      return _convertTimestamps(
+          {'id': doc.id, ...doc.data() as Map<String, dynamic>});
     }
     return null;
   }
@@ -83,27 +132,31 @@ class FirestoreService {
     });
   }
 
-  static Future<List<Map<String, dynamic>>> getHousesByJoinCode(String joinCode) async {
+  static Future<List<Map<String, dynamic>>> getHousesByJoinCode(
+      String joinCode) async {
     final query = await _db
         .collection('houses')
         .where('joinCode', isEqualTo: joinCode)
         .get();
-    return query.docs.map((doc) => _convertTimestamps({
-      'id': doc.id,
-      ...doc.data(),
-    })).toList();
+    return query.docs
+        .map((doc) => _convertTimestamps({
+              'id': doc.id,
+              ...doc.data(),
+            }))
+        .toList();
   }
 
   static Stream<List<Map<String, dynamic>>> streamHouses() {
     return _db.collection('houses').snapshots().map((snapshot) => snapshot.docs
         .map((doc) => _convertTimestamps({
-          'id': doc.id,
-          ...doc.data(),
-        }))
+              'id': doc.id,
+              ...doc.data(),
+            }))
         .toList());
   }
 
-  static Future<void> updateHouse(String houseId, Map<String, dynamic> data) async {
+  static Future<void> updateHouse(
+      String houseId, Map<String, dynamic> data) async {
     await _db.collection('houses').doc(houseId).update({
       ...data,
       'updatedAt': FieldValue.serverTimestamp(),
@@ -111,7 +164,7 @@ class FirestoreService {
   }
 
   // ============ CHORES ============
-  
+
   static Future<String> createChore(Map<String, dynamic> choreData) async {
     final docRef = await _db.collection('chores').add({
       ...choreData,
@@ -124,37 +177,43 @@ class FirestoreService {
   static Future<Map<String, dynamic>?> getChore(String choreId) async {
     final doc = await _db.collection('chores').doc(choreId).get();
     if (doc.exists) {
-      return _convertTimestamps({'id': doc.id, ...doc.data() as Map<String, dynamic>});
+      return _convertTimestamps(
+          {'id': doc.id, ...doc.data() as Map<String, dynamic>});
     }
     return null;
   }
 
-  static Stream<List<Map<String, dynamic>>> streamChoresByHouse(String houseId) {
+  static Stream<List<Map<String, dynamic>>> streamChoresByHouse(
+      String houseId) {
     return _db
         .collection('chores')
         .where('houseId', isEqualTo: houseId)
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => _convertTimestamps({
-              'id': doc.id,
-              ...doc.data(),
-            }))
+                  'id': doc.id,
+                  ...doc.data(),
+                }))
             .toList());
   }
 
   // Get chores by house (non-stream - cho dashboard)
-  static Future<List<Map<String, dynamic>>> getChoresByHouse(String houseId) async {
+  static Future<List<Map<String, dynamic>>> getChoresByHouse(
+      String houseId) async {
     final query = await _db
         .collection('chores')
         .where('houseId', isEqualTo: houseId)
         .get();
-    return query.docs.map((doc) => _convertTimestamps({
-      'id': doc.id,
-      ...doc.data(),
-    })).toList();
+    return query.docs
+        .map((doc) => _convertTimestamps({
+              'id': doc.id,
+              ...doc.data(),
+            }))
+        .toList();
   }
 
-  static Future<void> updateChore(String choreId, Map<String, dynamic> data) async {
+  static Future<void> updateChore(
+      String choreId, Map<String, dynamic> data) async {
     await _db.collection('chores').doc(choreId).update({
       ...data,
       'updatedAt': FieldValue.serverTimestamp(),
@@ -166,7 +225,7 @@ class FirestoreService {
   }
 
   // ============ EXPENSES ============
-  
+
   static Future<String> createExpense(Map<String, dynamic> expenseData) async {
     final docRef = await _db.collection('expenses').add({
       ...expenseData,
@@ -178,12 +237,14 @@ class FirestoreService {
   static Future<Map<String, dynamic>?> getExpense(String expenseId) async {
     final doc = await _db.collection('expenses').doc(expenseId).get();
     if (doc.exists) {
-      return _convertTimestamps({'id': doc.id, ...doc.data() as Map<String, dynamic>});
+      return _convertTimestamps(
+          {'id': doc.id, ...doc.data() as Map<String, dynamic>});
     }
     return null;
   }
 
-  static Stream<List<Map<String, dynamic>>> streamExpensesByHouse(String houseId) {
+  static Stream<List<Map<String, dynamic>>> streamExpensesByHouse(
+      String houseId) {
     return _db
         .collection('expenses')
         .where('houseId', isEqualTo: houseId)
@@ -191,22 +252,25 @@ class FirestoreService {
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => _convertTimestamps({
-              'id': doc.id,
-              ...doc.data(),
-            }))
+                  'id': doc.id,
+                  ...doc.data(),
+                }))
             .toList());
   }
 
   // Get expenses by house (non-stream - cho dashboard)
-  static Future<List<Map<String, dynamic>>> getExpensesByHouse(String houseId) async {
+  static Future<List<Map<String, dynamic>>> getExpensesByHouse(
+      String houseId) async {
     final query = await _db
         .collection('expenses')
         .where('houseId', isEqualTo: houseId)
         .get();
-    final results = query.docs.map((doc) => _convertTimestamps({
-      'id': doc.id,
-      ...doc.data(),
-    })).toList();
+    final results = query.docs
+        .map((doc) => _convertTimestamps({
+              'id': doc.id,
+              ...doc.data(),
+            }))
+        .toList();
     // Sắp xếp theo ngày tạo mới nhất
     results.sort((a, b) {
       final aDate = a['createdAt']?.toString() ?? '';
@@ -216,7 +280,8 @@ class FirestoreService {
     return results;
   }
 
-  static Future<void> updateExpense(String expenseId, Map<String, dynamic> data) async {
+  static Future<void> updateExpense(
+      String expenseId, Map<String, dynamic> data) async {
     await _db.collection('expenses').doc(expenseId).update({
       ...data,
       'updatedAt': FieldValue.serverTimestamp(),
@@ -228,7 +293,7 @@ class FirestoreService {
   }
 
   // ============ BULLETIN NOTES ============
-  
+
   static Future<String> createNote(Map<String, dynamic> noteData) async {
     final docRef = await _db.collection('notes').add({
       ...noteData,
@@ -246,25 +311,29 @@ class FirestoreService {
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => _convertTimestamps({
-              'id': doc.id,
-              ...doc.data(),
-            }))
+                  'id': doc.id,
+                  ...doc.data(),
+                }))
             .toList());
   }
 
   // Get notes by house (non-stream - cho dashboard)
-  static Future<List<Map<String, dynamic>>> getNotesByHouse(String houseId) async {
+  static Future<List<Map<String, dynamic>>> getNotesByHouse(
+      String houseId) async {
     final query = await _db
         .collection('notes')
         .where('houseId', isEqualTo: houseId)
         .get();
-    return query.docs.map((doc) => _convertTimestamps({
-      'id': doc.id,
-      ...doc.data(),
-    })).toList();
+    return query.docs
+        .map((doc) => _convertTimestamps({
+              'id': doc.id,
+              ...doc.data(),
+            }))
+        .toList();
   }
 
-  static Future<void> updateNote(String noteId, Map<String, dynamic> data) async {
+  static Future<void> updateNote(
+      String noteId, Map<String, dynamic> data) async {
     await _db.collection('notes').doc(noteId).update({
       ...data,
       'updatedAt': FieldValue.serverTimestamp(),
@@ -276,8 +345,9 @@ class FirestoreService {
   }
 
   // ============ SHOPPING ITEMS ============
-  
-  static Future<String> createShoppingItem(Map<String, dynamic> itemData) async {
+
+  static Future<String> createShoppingItem(
+      Map<String, dynamic> itemData) async {
     final docRef = await _db.collection('shopping_items').add({
       ...itemData,
       'isPurchased': false,
@@ -286,20 +356,22 @@ class FirestoreService {
     return docRef.id;
   }
 
-  static Stream<List<Map<String, dynamic>>> streamShoppingItemsByHouse(String houseId) {
+  static Stream<List<Map<String, dynamic>>> streamShoppingItemsByHouse(
+      String houseId) {
     return _db
         .collection('shopping_items')
         .where('houseId', isEqualTo: houseId)
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => _convertTimestamps({
-              'id': doc.id,
-              ...doc.data(),
-            }))
+                  'id': doc.id,
+                  ...doc.data(),
+                }))
             .toList());
   }
 
-  static Future<void> updateShoppingItem(String itemId, Map<String, dynamic> data) async {
+  static Future<void> updateShoppingItem(
+      String itemId, Map<String, dynamic> data) async {
     await _db.collection('shopping_items').doc(itemId).update({
       ...data,
       'updatedAt': FieldValue.serverTimestamp(),
@@ -311,20 +383,24 @@ class FirestoreService {
   }
 
   // Get shopping items by house (non-stream)
-  static Future<List<Map<String, dynamic>>> getShoppingItemsByHouse(String houseId) async {
+  static Future<List<Map<String, dynamic>>> getShoppingItemsByHouse(
+      String houseId) async {
     final query = await _db
         .collection('shopping_items')
         .where('houseId', isEqualTo: houseId)
         .get();
-    return query.docs.map((doc) => _convertTimestamps({
-      'id': doc.id,
-      ...doc.data(),
-    })).toList();
+    return query.docs
+        .map((doc) => _convertTimestamps({
+              'id': doc.id,
+              ...doc.data(),
+            }))
+        .toList();
   }
 
   // ============ CHORE ASSIGNMENTS ============
 
-  static Future<String> assignChore(String choreId, String userId, String userName) async {
+  static Future<String> assignChore(
+      String choreId, String userId, String userName) async {
     final docRef = await _db.collection('chore_assignments').add({
       'choreId': choreId,
       'userId': userId,
@@ -335,15 +411,18 @@ class FirestoreService {
     return docRef.id;
   }
 
-  static Future<List<Map<String, dynamic>>> getChoreAssignments(String choreId) async {
+  static Future<List<Map<String, dynamic>>> getChoreAssignments(
+      String choreId) async {
     final query = await _db
         .collection('chore_assignments')
         .where('choreId', isEqualTo: choreId)
         .get();
-    return query.docs.map((doc) => _convertTimestamps({
-      'id': doc.id,
-      ...doc.data(),
-    })).toList();
+    return query.docs
+        .map((doc) => _convertTimestamps({
+              'id': doc.id,
+              ...doc.data(),
+            }))
+        .toList();
   }
 
   // ============ HELPERS: DAILY RESET ============
@@ -400,13 +479,25 @@ class FirestoreService {
       final currentIndex = chore['currentAssigneeIndex'] ?? 0;
 
       // Kiểm tra kỳ trước có hoàn thành không
-      bool wasCompleted = lastCompletedDate != null && lastCompletedDate == lastResetDate;
+      bool wasCompleted =
+          lastCompletedDate != null && lastCompletedDate == lastResetDate;
 
       // KHÔNG hoàn thành → TRỪ ĐIỂM
-      if (!wasCompleted && currentAssigneeId != null && currentAssigneeId.isNotEmpty) {
+      if (!wasCompleted &&
+          currentAssigneeId != null &&
+          currentAssigneeId.isNotEmpty) {
         await _db.collection('users').doc(currentAssigneeId).update({
           'chorePoints': FieldValue.increment(-points),
         });
+        await createNotification(
+          recipientUserId: currentAssigneeId,
+          houseId: houseId,
+          title: 'Bạn bị trừ điểm',
+          message:
+              'Bạn chưa hoàn thành "${chore['title'] ?? 'việc nhà'}" đúng hạn (-$points điểm).',
+          type: 'chore',
+          relatedId: choreId,
+        );
       }
 
       // LUÂN PHIÊN sang người tiếp theo
@@ -423,6 +514,15 @@ class FirestoreService {
           'lastResetDate': todayStr,
           'lastCompletedDate': null,
         });
+
+        await createNotification(
+          recipientUserId: nextUserId,
+          houseId: houseId,
+          title: 'Đến lượt việc nhà',
+          message: 'Đến lượt bạn làm "${chore['title'] ?? 'việc nhà'}".',
+          type: 'chore',
+          relatedId: choreId,
+        );
       } else {
         await _db.collection('chores').doc(choreId).update({
           'lastResetDate': todayStr,
@@ -475,7 +575,7 @@ class FirestoreService {
   }
 
   // ============ VIỆC XOAY VÒNG (Recurring Chores) ============
-  
+
   /// Tạo việc xoay vòng - tự động giao luân phiên
   static Future<String> createRecurringChore({
     required String houseId,
@@ -487,10 +587,11 @@ class FirestoreService {
     // Lấy danh sách thành viên để tạo thứ tự xoay vòng
     final members = await getHouseMembers(houseId);
     final assignmentOrder = members.map((m) => m['id'] as String).toList();
-    
+
     final firstUserId = assignmentOrder.isNotEmpty ? assignmentOrder[0] : '';
-    final firstUserName = members.isNotEmpty ? (members[0]['name'] ?? 'Unknown') : '';
-    
+    final firstUserName =
+        members.isNotEmpty ? (members[0]['name'] ?? 'Unknown') : '';
+
     final todayStr = _todayString();
     final docRef = await _db.collection('chores').add({
       'houseId': houseId,
@@ -512,7 +613,7 @@ class FirestoreService {
   }
 
   // ============ VIỆC TỰ NHẬN (One-time Chores) ============
-  
+
   /// Tạo việc tự nhận - ai muốn làm thì nhận
   static Future<String> createOneTimeChore({
     required String houseId,
@@ -537,7 +638,8 @@ class FirestoreService {
   }
 
   /// Nhận việc (cho one-time chores)
-  static Future<void> claimChore(String choreId, String userId, String userName) async {
+  static Future<void> claimChore(
+      String choreId, String userId, String userName) async {
     await _db.collection('chores').doc(choreId).update({
       'status': 'claimed',
       'claimedByUserId': userId,
@@ -547,20 +649,24 @@ class FirestoreService {
   }
 
   /// Lấy việc xoay vòng của house
-  static Future<List<Map<String, dynamic>>> getRecurringChores(String houseId) async {
+  static Future<List<Map<String, dynamic>>> getRecurringChores(
+      String houseId) async {
     final query = await _db
         .collection('chores')
         .where('houseId', isEqualTo: houseId)
         .where('type', isEqualTo: 'recurring')
         .get();
-    return query.docs.map((doc) => _convertTimestamps({
-      'id': doc.id,
-      ...doc.data(),
-    })).toList();
+    return query.docs
+        .map((doc) => _convertTimestamps({
+              'id': doc.id,
+              ...doc.data(),
+            }))
+        .toList();
   }
 
   /// Lấy việc tự nhận của house (chưa hoàn thành)
-  static Future<List<Map<String, dynamic>>> getOneTimeChores(String houseId) async {
+  static Future<List<Map<String, dynamic>>> getOneTimeChores(
+      String houseId) async {
     final query = await _db
         .collection('chores')
         .where('houseId', isEqualTo: houseId)
@@ -575,7 +681,8 @@ class FirestoreService {
   }
 
   /// Lấy việc đã hoàn thành của house
-  static Future<List<Map<String, dynamic>>> getCompletedChores(String houseId) async {
+  static Future<List<Map<String, dynamic>>> getCompletedChores(
+      String houseId) async {
     final query = await _db
         .collection('chores')
         .where('houseId', isEqualTo: houseId)
@@ -589,7 +696,7 @@ class FirestoreService {
   }
 
   // ============ BALANCES (for splits) ============
-  
+
   static Future<String> createBalance(Map<String, dynamic> balanceData) async {
     final docRef = await _db.collection('balances').add({
       ...balanceData,
@@ -598,20 +705,22 @@ class FirestoreService {
     return docRef.id;
   }
 
-  static Stream<List<Map<String, dynamic>>> streamBalancesByHouse(String houseId) {
+  static Stream<List<Map<String, dynamic>>> streamBalancesByHouse(
+      String houseId) {
     return _db
         .collection('balances')
         .where('houseId', isEqualTo: houseId)
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => _convertTimestamps({
-              'id': doc.id,
-              ...doc.data(),
-            }))
+                  'id': doc.id,
+                  ...doc.data(),
+                }))
             .toList());
   }
 
-  static Future<void> updateBalance(String balanceId, Map<String, dynamic> data) async {
+  static Future<void> updateBalance(
+      String balanceId, Map<String, dynamic> data) async {
     await _db.collection('balances').doc(balanceId).update(data);
   }
 
@@ -634,39 +743,45 @@ class FirestoreService {
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => _convertTimestamps({
-              'id': doc.id,
-              ...doc.data(),
-            }))
+                  'id': doc.id,
+                  ...doc.data(),
+                }))
             .toList());
   }
 
-  static Future<List<Map<String, dynamic>>> getDebtsByHouse(String houseId) async {
+  static Future<List<Map<String, dynamic>>> getDebtsByHouse(
+      String houseId) async {
     final query = await _db
         .collection('debts')
         .where('houseId', isEqualTo: houseId)
         .where('isSettled', isEqualTo: false)
         .get();
-    return query.docs.map((doc) => _convertTimestamps({'id': doc.id, ...doc.data()})).toList();
+    return query.docs
+        .map((doc) => _convertTimestamps({'id': doc.id, ...doc.data()}))
+        .toList();
   }
 
-  static Future<List<Map<String, dynamic>>> getDebtsByUser(String userId) async {
+  static Future<List<Map<String, dynamic>>> getDebtsByUser(
+      String userId) async {
     // Lấy nợ mà user này nợ người khác
     final owesQuery = await _db
         .collection('debts')
         .where('debtorId', isEqualTo: userId)
         .where('isSettled', isEqualTo: false)
         .get();
-    
+
     // Lấy nợ mà người khác nợ user này
     final owedQuery = await _db
         .collection('debts')
         .where('creditorId', isEqualTo: userId)
         .where('isSettled', isEqualTo: false)
         .get();
-    
+
     final debts = [
-      ...owesQuery.docs.map((doc) => _convertTimestamps({'id': doc.id, 'type': 'owes', ...doc.data()})),
-      ...owedQuery.docs.map((doc) => _convertTimestamps({'id': doc.id, 'type': 'owed', ...doc.data()})),
+      ...owesQuery.docs.map((doc) =>
+          _convertTimestamps({'id': doc.id, 'type': 'owes', ...doc.data()})),
+      ...owedQuery.docs.map((doc) =>
+          _convertTimestamps({'id': doc.id, 'type': 'owed', ...doc.data()})),
     ];
     return debts;
   }
@@ -685,6 +800,139 @@ class FirestoreService {
     });
   }
 
+  /// Tạo khoản nợ mới nhưng tự động NET với khoản nợ ngược chiều đang tồn tại.
+  /// Ví dụ: A nợ B 50k, tạo thêm B nợ A 20k -> còn A nợ B 30k.
+  static Future<void> _createOrNetDebt({
+    required String houseId,
+    required String expenseId,
+    required String debtorId,
+    required String debtorName,
+    required String creditorId,
+    required String creditorName,
+    required double amount,
+    required String description,
+  }) async {
+    if (amount <= 0) return;
+
+    double remaining = amount;
+
+    final oppositeQuery = await _db
+        .collection('debts')
+        .where('houseId', isEqualTo: houseId)
+        .where('debtorId', isEqualTo: creditorId)
+        .where('creditorId', isEqualTo: debtorId)
+        .where('isSettled', isEqualTo: false)
+        .get();
+
+    for (final doc in oppositeQuery.docs) {
+      if (remaining <= 0) break;
+
+      final data = doc.data();
+      final oppositeAmount = (data['amount'] as num?)?.toDouble() ?? 0;
+      if (oppositeAmount <= 0) continue;
+
+      if (oppositeAmount > remaining) {
+        await _db.collection('debts').doc(doc.id).update({
+          'amount': oppositeAmount - remaining,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+        remaining = 0;
+      } else if (oppositeAmount == remaining) {
+        await settleDebt(doc.id);
+        remaining = 0;
+      } else {
+        await settleDebt(doc.id);
+        remaining -= oppositeAmount;
+      }
+    }
+
+    if (remaining > 0) {
+      await createDebt({
+        'houseId': houseId,
+        'expenseId': expenseId,
+        'debtorId': debtorId,
+        'debtorName': debtorName,
+        'creditorId': creditorId,
+        'creditorName': creditorName,
+        'amount': remaining,
+        'description': description,
+      });
+    }
+  }
+
+  /// Tính danh sách nợ tối giản theo số dư ròng toàn house (không ghi DB).
+  static Future<List<Map<String, dynamic>>> getSimplifiedDebtsByHouse(
+      String houseId) async {
+    final rawDebts = await getDebtsByHouse(houseId);
+    if (rawDebts.isEmpty) return [];
+
+    final Map<String, double> net = {}; // + là được nhận, - là phải trả
+    final Map<String, String> names = {};
+
+    for (final debt in rawDebts) {
+      final debtorId = (debt['debtorId'] ?? '').toString();
+      final creditorId = (debt['creditorId'] ?? '').toString();
+      final debtorName = (debt['debtorName'] ?? 'Unknown').toString();
+      final creditorName = (debt['creditorName'] ?? 'Unknown').toString();
+      final amount = (debt['amount'] as num?)?.toDouble() ?? 0;
+      if (debtorId.isEmpty || creditorId.isEmpty || amount <= 0) continue;
+
+      names[debtorId] = debtorName;
+      names[creditorId] = creditorName;
+
+      net[debtorId] = (net[debtorId] ?? 0) - amount;
+      net[creditorId] = (net[creditorId] ?? 0) + amount;
+    }
+
+    final debtors = net.entries
+        .where((e) => e.value < -0.0001)
+        .map((e) => {'userId': e.key, 'amount': -e.value})
+        .toList()
+      ..sort(
+          (a, b) => ((b['amount'] as double)).compareTo(a['amount'] as double));
+
+    final creditors = net.entries
+        .where((e) => e.value > 0.0001)
+        .map((e) => {'userId': e.key, 'amount': e.value})
+        .toList()
+      ..sort(
+          (a, b) => ((b['amount'] as double)).compareTo(a['amount'] as double));
+
+    int i = 0, j = 0;
+    final List<Map<String, dynamic>> simplified = [];
+
+    while (i < debtors.length && j < creditors.length) {
+      final debtorAmount = debtors[i]['amount'] as double;
+      final creditorAmount = creditors[j]['amount'] as double;
+      final transfer =
+          debtorAmount < creditorAmount ? debtorAmount : creditorAmount;
+
+      final debtorId = debtors[i]['userId'] as String;
+      final creditorId = creditors[j]['userId'] as String;
+
+      if (transfer > 0.0001) {
+        simplified.add({
+          'houseId': houseId,
+          'debtorId': debtorId,
+          'debtorName': names[debtorId] ?? 'Unknown',
+          'creditorId': creditorId,
+          'creditorName': names[creditorId] ?? 'Unknown',
+          'amount': double.parse(transfer.toStringAsFixed(2)),
+          'description': 'Nợ đã tối giản',
+          'isSimplified': true,
+        });
+      }
+
+      debtors[i]['amount'] = debtorAmount - transfer;
+      creditors[j]['amount'] = creditorAmount - transfer;
+
+      if ((debtors[i]['amount'] as double) <= 0.0001) i++;
+      if ((creditors[j]['amount'] as double) <= 0.0001) j++;
+    }
+
+    return simplified;
+  }
+
   // ============ EXPENSE WITH SPLIT (tạo expense + debts) ============
 
   static Future<void> createExpenseWithSplit({
@@ -694,7 +942,9 @@ class FirestoreService {
     required String description,
     required double amount,
     required String category,
-    required List<Map<String, dynamic>> splitWith, // [{userId, userName, amount}]
+    String splitType = 'equal',
+    required List<Map<String, dynamic>>
+        splitWith, // [{userId, userName, amount}]
   }) async {
     // 1. Tạo expense
     final expenseId = await createExpense({
@@ -704,34 +954,56 @@ class FirestoreService {
       'description': description,
       'amount': amount,
       'category': category,
-      'splitType': 'equal',
+      'splitType': splitType,
     });
 
     // 2. Tạo debts cho mỗi người được chia (trừ người trả)
     for (var split in splitWith) {
       if (split['userId'] != paidByUserId && split['amount'] > 0) {
-        await createDebt({
-          'houseId': houseId,
-          'expenseId': expenseId,
-          'debtorId': split['userId'],
-          'debtorName': split['userName'],
-          'creditorId': paidByUserId,
-          'creditorName': paidByName,
-          'amount': split['amount'],
-          'description': description,
-        });
+        await _createOrNetDebt(
+          houseId: houseId,
+          expenseId: expenseId,
+          debtorId: split['userId'],
+          debtorName: split['userName'],
+          creditorId: paidByUserId,
+          creditorName: paidByName,
+          amount: (split['amount'] as num).toDouble(),
+          description: description,
+        );
+
+        await createNotification(
+          recipientUserId: split['userId'] as String,
+          houseId: houseId,
+          title: 'Khoản chi mới',
+          message:
+              '$paidByName vừa thêm "$description". Bạn cần trả ${(split['amount'] as num).toStringAsFixed(0)}đ.',
+          type: 'expense',
+          relatedId: expenseId,
+        );
       }
     }
+
+    await createNotification(
+      recipientUserId: paidByUserId,
+      houseId: houseId,
+      title: 'Đã thêm chi tiêu',
+      message: 'Khoản "$description" đã được ghi nhận thành công.',
+      type: 'expense',
+      relatedId: expenseId,
+    );
   }
 
   // ============ GET HOUSE MEMBERS ============
 
-  static Future<List<Map<String, dynamic>>> getHouseMembers(String houseId) async {
+  static Future<List<Map<String, dynamic>>> getHouseMembers(
+      String houseId) async {
     final query = await _db
         .collection('users')
         .where('houseId', isEqualTo: houseId)
         .get();
-    return query.docs.map((doc) => _convertTimestamps({'id': doc.id, ...doc.data()})).toList();
+    return query.docs
+        .map((doc) => _convertTimestamps({'id': doc.id, ...doc.data()}))
+        .toList();
   }
 
   // ============ AUTH (Login/Register using Firestore) ============
@@ -749,7 +1021,7 @@ class FirestoreService {
           .collection('users')
           .where('email', isEqualTo: email.toLowerCase())
           .get();
-      
+
       if (existingUsers.docs.isNotEmpty) {
         return {
           'success': false,
@@ -792,13 +1064,14 @@ class FirestoreService {
   }
 
   /// Đăng nhập bằng email
-  static Future<Map<String, dynamic>> loginByEmail(String email, String password) async {
+  static Future<Map<String, dynamic>> loginByEmail(
+      String email, String password) async {
     try {
       final query = await _db
           .collection('users')
           .where('email', isEqualTo: email.toLowerCase())
           .get();
-      
+
       if (query.docs.isEmpty) {
         return {
           'success': false,
@@ -808,18 +1081,19 @@ class FirestoreService {
 
       final userData = query.docs.first.data();
       final storedPassword = userData['password'] as String?;
-      
+
       // Kiểm tra password - hỗ trợ cả password cũ (không hash) và mới (đã hash)
       final hashedInputPassword = _hashPassword(password);
-      final isPasswordCorrect = storedPassword == password || storedPassword == hashedInputPassword;
-      
+      final isPasswordCorrect =
+          storedPassword == password || storedPassword == hashedInputPassword;
+
       if (storedPassword != null && !isPasswordCorrect) {
         return {
           'success': false,
           'message': 'Mật khẩu không đúng',
         };
       }
-      
+
       // Nếu password cũ chưa hash, tự động cập nhật sang hash
       if (storedPassword == password && storedPassword != hashedInputPassword) {
         await _db.collection('users').doc(query.docs.first.id).update({
@@ -842,11 +1116,125 @@ class FirestoreService {
     }
   }
 
+  /// Cập nhật hồ sơ người dùng hiện tại
+  static Future<Map<String, dynamic>> updateUserProfile({
+    required String userId,
+    required String name,
+    required String email,
+    String? phoneNumber,
+    String? avatarUrl,
+    String? avatarBase64,
+    String? currentPassword,
+    String? newPassword,
+  }) async {
+    try {
+      final userRef = _db.collection('users').doc(userId);
+      final snapshot = await userRef.get();
+
+      if (!snapshot.exists || snapshot.data() == null) {
+        return {
+          'success': false,
+          'message': 'Không tìm thấy người dùng',
+        };
+      }
+
+      final currentData = snapshot.data() as Map<String, dynamic>;
+      final normalizedEmail = email.trim().toLowerCase();
+      final trimmedName = name.trim();
+      final trimmedPhone = phoneNumber?.trim() ?? '';
+      final trimmedAvatarUrl = avatarUrl?.trim() ?? '';
+      final trimmedAvatarBase64 = avatarBase64?.trim() ?? '';
+      final trimmedNewPassword = newPassword?.trim() ?? '';
+
+      if (trimmedName.isEmpty) {
+        return {
+          'success': false,
+          'message': 'Tên không được để trống',
+        };
+      }
+
+      if (normalizedEmail.isEmpty) {
+        return {
+          'success': false,
+          'message': 'Email không được để trống',
+        };
+      }
+
+      final currentEmail =
+          (currentData['email'] ?? '').toString().toLowerCase();
+      if (normalizedEmail != currentEmail) {
+        final duplicateQuery = await _db
+            .collection('users')
+            .where('email', isEqualTo: normalizedEmail)
+            .get();
+
+        final hasDuplicate = duplicateQuery.docs.any((doc) => doc.id != userId);
+        if (hasDuplicate) {
+          return {
+            'success': false,
+            'message': 'Email đã được sử dụng',
+          };
+        }
+      }
+
+      final updateData = <String, dynamic>{
+        'name': trimmedName,
+        'email': normalizedEmail,
+        'phoneNumber': trimmedPhone,
+        'avatarUrl': trimmedAvatarUrl,
+        'avatarBase64': trimmedAvatarBase64,
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+      if (trimmedNewPassword.isNotEmpty) {
+        if ((currentPassword ?? '').trim().isEmpty) {
+          return {
+            'success': false,
+            'message': 'Vui lòng nhập mật khẩu hiện tại',
+          };
+        }
+
+        final storedPassword = (currentData['password'] ?? '').toString();
+        final normalizedCurrentPassword = currentPassword!.trim();
+        final hashedCurrentPassword = _hashPassword(normalizedCurrentPassword);
+        final isCurrentPasswordValid =
+            storedPassword == normalizedCurrentPassword ||
+                storedPassword == hashedCurrentPassword;
+
+        if (!isCurrentPasswordValid) {
+          return {
+            'success': false,
+            'message': 'Mật khẩu hiện tại không đúng',
+          };
+        }
+
+        updateData['password'] = _hashPassword(trimmedNewPassword);
+      }
+
+      await userRef.update(updateData);
+
+      final refreshedSnapshot = await userRef.get();
+      return {
+        'success': true,
+        'user': _convertTimestamps({
+          'id': refreshedSnapshot.id,
+          ...?refreshedSnapshot.data(),
+        }),
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Không thể cập nhật hồ sơ: $e',
+      };
+    }
+  }
+
   /// Lấy user theo ID
   static Future<Map<String, dynamic>?> getUserById(String oduserId) async {
     final doc = await _db.collection('users').doc(oduserId).get();
     if (doc.exists) {
-      return _convertTimestamps({'id': doc.id, ...doc.data() as Map<String, dynamic>});
+      return _convertTimestamps(
+          {'id': doc.id, ...doc.data() as Map<String, dynamic>});
     }
     return null;
   }
@@ -859,6 +1247,22 @@ class FirestoreService {
     });
   }
 
+  /// Rời khỏi house hiện tại
+  static Future<void> leaveHouse({
+    required String userId,
+    required String houseId,
+  }) async {
+    await _db.collection('users').doc(userId).update({
+      'houseId': '',
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    await _db.collection('houses').doc(houseId).update({
+      'memberCount': FieldValue.increment(-1),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   /// Tạo house mới
   static Future<Map<String, dynamic>> createHouseAndJoin({
     required String houseName,
@@ -867,7 +1271,7 @@ class FirestoreService {
   }) async {
     // Tạo mã join ngẫu nhiên
     final joinCode = _generateJoinCode();
-    
+
     // Tạo house
     final houseRef = await _db.collection('houses').add({
       'name': houseName,
@@ -900,7 +1304,7 @@ class FirestoreService {
         .collection('houses')
         .where('joinCode', isEqualTo: joinCode.toUpperCase())
         .get();
-    
+
     if (query.docs.isEmpty) {
       return {
         'success': false,
@@ -910,10 +1314,10 @@ class FirestoreService {
 
     final house = query.docs.first;
     final houseData = house.data();
-    
+
     // Cập nhật houseId cho user
     await updateUserHouse(userId, house.id);
-    
+
     // Tăng memberCount
     await _db.collection('houses').doc(house.id).update({
       'memberCount': FieldValue.increment(1),

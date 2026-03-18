@@ -13,6 +13,7 @@ class BalanceSheetScreen extends StatefulWidget {
 
 class _BalanceSheetScreenState extends State<BalanceSheetScreen> {
   List<Map<String, dynamic>> debts = [];
+  List<Map<String, dynamic>> simplifiedDebts = [];
   String? currentUserId;
   String? currentUserName;
   String? houseId;
@@ -49,6 +50,7 @@ class _BalanceSheetScreenState extends State<BalanceSheetScreen> {
       
       // Load debts từ Firebase
       final debtsList = await FirestoreService.getDebtsByHouse(houseId!);
+      final simplified = await FirestoreService.getSimplifiedDebtsByHouse(houseId!);
       
       // Tính tổng nợ
       double owes = 0;
@@ -65,6 +67,7 @@ class _BalanceSheetScreenState extends State<BalanceSheetScreen> {
 
       setState(() {
         debts = debtsList;
+        simplifiedDebts = simplified;
         totalOwes = owes;
         totalOwed = owed;
         isLoading = false;
@@ -166,6 +169,10 @@ class _BalanceSheetScreenState extends State<BalanceSheetScreen> {
                 style: AppTextStyles.h4.copyWith(fontSize: 16),
               ),
               const SizedBox(height: 16),
+              if (simplifiedDebts.isNotEmpty) ...[
+                _buildSimplifiedDebtCard(),
+                const SizedBox(height: 16),
+              ],
               _buildDebtList(),
             ] else ...[
               _buildEmptyState(),
@@ -348,6 +355,43 @@ class _BalanceSheetScreenState extends State<BalanceSheetScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildSimplifiedDebtCard() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.indigo.withOpacity(0.07),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.indigo.withOpacity(0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.auto_fix_high, color: Colors.indigo, size: 18),
+              SizedBox(width: 8),
+              Text(
+                'Gợi ý thanh toán tối giản',
+                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ...simplifiedDebts.map((d) {
+            final amount = (d['amount'] as num?)?.toDouble() ?? 0;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(
+                '• ${d['debtorName']} → ${d['creditorName']}: ${_formatMoney(amount)}đ',
+                style: const TextStyle(fontSize: 13),
+              ),
+            );
+          }),
+        ],
+      ),
     );
   }
 

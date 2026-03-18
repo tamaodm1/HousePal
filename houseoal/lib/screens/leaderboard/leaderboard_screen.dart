@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/colors.dart';
+import '../../core/widgets/user_avatar.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 
@@ -29,7 +30,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       }
 
       final members = await FirestoreService.getHouseMembers(houseId);
-      members.sort((a, b) => ((b['chorePoints'] as num?) ?? 0).compareTo((a['chorePoints'] as num?) ?? 0));
+      members.sort((a, b) => ((b['chorePoints'] as num?) ?? 0)
+          .compareTo((a['chorePoints'] as num?) ?? 0));
 
       setState(() {
         _membersList = members;
@@ -91,13 +93,16 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isFirst ? const Color(0xFFFBC02D) : const Color(0xFFE0E0E0),
+                          color: isFirst
+                              ? const Color(0xFFFBC02D)
+                              : const Color(0xFFE0E0E0),
                           width: isFirst ? 2 : 1,
                         ),
                         boxShadow: isFirst
                             ? [
                                 BoxShadow(
-                                  color: const Color(0xFFFBC02D).withOpacity(0.3),
+                                  color:
+                                      const Color(0xFFFBC02D).withOpacity(0.3),
                                   blurRadius: 8,
                                 )
                               ]
@@ -112,10 +117,14 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                               width: 50,
                               height: 50,
                               decoration: BoxDecoration(
-                                color: isFirst ? const Color(0xFFFFE082) : const Color(0xFFF5F5F5),
+                                color: isFirst
+                                    ? const Color(0xFFFFE082)
+                                    : const Color(0xFFF5F5F5),
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: isFirst ? const Color(0xFFFBC02D) : const Color(0xFFE0E0E0),
+                                  color: isFirst
+                                      ? const Color(0xFFFBC02D)
+                                      : const Color(0xFFE0E0E0),
                                   width: 2,
                                 ),
                               ),
@@ -125,12 +134,22 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                                   style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
-                                    color: isFirst ? const Color(0xFFF57F17) : Colors.grey,
+                                    color: isFirst
+                                        ? const Color(0xFFF57F17)
+                                        : Colors.grey,
                                   ),
                                 ),
                               ),
                             ),
                             const SizedBox(width: 16),
+                            UserAvatar(
+                              name: (user['name'] ?? '').toString(),
+                              avatarUrl: (user['avatarUrl'] ?? '').toString(),
+                              avatarBase64:
+                                  (user['avatarBase64'] ?? '').toString(),
+                              radius: 22,
+                            ),
+                            const SizedBox(width: 12),
                             // Name & Avatar
                             Expanded(
                               child: Column(
@@ -156,7 +175,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                             ),
                             // Points
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
                                 color: AppColors.primary,
                                 borderRadius: BorderRadius.circular(8),

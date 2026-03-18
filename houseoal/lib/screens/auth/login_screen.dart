@@ -36,24 +36,24 @@ class _LoginScreenState extends State<LoginScreen> {
           _emailController.text.trim(),
           _passwordController.text,
         );
-        
+
         if (result['success'] == true) {
           // Lưu user vào local storage
           await AuthService.saveUserFirebase(result['user']);
-          
+
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('✅ Đăng nhập thành công!'),
+                content: Text('Đăng nhập thành công'),
                 backgroundColor: Colors.green,
                 duration: Duration(seconds: 1),
               ),
             );
-            
+
             // Kiểm tra xem user đã có nhà chưa
             final userData = result['user'] as Map<String, dynamic>;
             final houseId = userData['houseId'] as String?;
-            
+
             if (houseId != null && houseId.isNotEmpty) {
               Navigator.pushReplacementNamed(context, '/home');
             } else {
@@ -68,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('❌ ${e.toString().replaceAll('Exception: ', '')}'),
+              content: Text(e.toString().replaceAll('Exception: ', '')),
               backgroundColor: Colors.red,
               duration: const Duration(seconds: 3),
             ),
@@ -77,6 +77,36 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       }
     }
+  }
+
+  void _showForgotPasswordDialog() {
+    final emailCtrl = TextEditingController(text: _emailController.text.trim());
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Khôi phục mật khẩu'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: emailCtrl,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(labelText: 'Email đã đăng ký'),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Bản hiện tại dùng Firestore auth nội bộ. Bạn gửi email cho admin để được đặt lại mật khẩu.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Đóng')),
+        ],
+      ),
+    );
   }
 
   @override
@@ -205,7 +235,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const Spacer(),
                     TextButton(
                       onPressed: () {
-                        // TODO: Navigate to forgot password
+                        _showForgotPasswordDialog();
                       },
                       child: const Text(
                         'Quên mật khẩu?',

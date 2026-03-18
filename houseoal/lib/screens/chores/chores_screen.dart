@@ -12,14 +12,15 @@ class ChoresScreen extends StatefulWidget {
   State<ChoresScreen> createState() => _ChoresScreenState();
 }
 
-class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderStateMixin {
+class _ChoresScreenState extends State<ChoresScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
+
   // Data từ Firebase - 2 loại việc
   List<Map<String, dynamic>> recurringChores = []; // Việc xoay vòng
-  List<Map<String, dynamic>> oneTimeChores = [];   // Việc tự nhận
+  List<Map<String, dynamic>> oneTimeChores = []; // Việc tự nhận
   List<Map<String, dynamic>> completedChores = []; // Việc đã xong
-  
+
   String? currentUserId;
   String? currentUserName;
   String? currentHouseId;
@@ -43,7 +44,7 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
 
       currentUserId = await AuthService.getFirebaseUserId();
       currentHouseId = await AuthService.getFirebaseHouseId();
-      
+
       if (currentHouseId == null || currentHouseId!.isEmpty) {
         setState(() {
           isLoading = false;
@@ -51,20 +52,22 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
         });
         return;
       }
-      
+
       // Lấy thông tin user để biết tên và check admin
       final userData = await FirestoreService.getUserById(currentUserId!);
       currentUserName = userData?['name'] ?? 'User';
-      
+
       // Kiểm tra admin (owner của house)
       final houseData = await FirestoreService.getHouseById(currentHouseId!);
       isAdmin = houseData?['ownerId'] == currentUserId;
-      
+
       // Load 2 loại chores
-      final recurring = await FirestoreService.getRecurringChores(currentHouseId!);
+      final recurring =
+          await FirestoreService.getRecurringChores(currentHouseId!);
       final oneTime = await FirestoreService.getOneTimeChores(currentHouseId!);
-      final completed = await FirestoreService.getCompletedChores(currentHouseId!);
-      
+      final completed =
+          await FirestoreService.getCompletedChores(currentHouseId!);
+
       setState(() {
         recurringChores = recurring;
         oneTimeChores = oneTime;
@@ -127,9 +130,9 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
             fontWeight: FontWeight.w600,
           ),
           tabs: const [
-            Tab(text: '🔄 Xoay vòng'),
-            Tab(text: '📋 Cần nhận'),
-            Tab(text: '✅ Hoàn thành'),
+            Tab(text: 'Xoay vòng'),
+            Tab(text: 'Cần nhận'),
+            Tab(text: 'Hoàn thành'),
           ],
         ),
       ),
@@ -157,7 +160,7 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
                     _buildCompletedTab(),
                   ],
                 ),
-      floatingActionButton: isAdmin 
+      floatingActionButton: isAdmin
           ? FloatingActionButton.extended(
               onPressed: _showAddChoreDialog,
               backgroundColor: AppColors.primary,
@@ -198,9 +201,11 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
   // ============ TAB CẦN NHẬN ============
   Widget _buildOneTimeTab() {
     // Chia thành 2 nhóm: chưa nhận và đã nhận
-    final availableChores = oneTimeChores.where((c) => c['status'] == 'available').toList();
-    final claimedChores = oneTimeChores.where((c) => c['status'] == 'claimed').toList();
-    
+    final availableChores =
+        oneTimeChores.where((c) => c['status'] == 'available').toList();
+    final claimedChores =
+        oneTimeChores.where((c) => c['status'] == 'claimed').toList();
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -212,20 +217,20 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
           '${availableChores.length} chờ nhận',
         ),
         const SizedBox(height: 16),
-        
+
         // Việc chờ nhận
         if (availableChores.isNotEmpty) ...[
-          _buildSectionTitle('🆕 Chờ nhận', Colors.green),
+          _buildSectionTitle('Chờ nhận', Colors.green),
           ...availableChores.map((chore) => _buildOneTimeCard(chore)),
         ],
-        
+
         // Việc đã có người nhận
         if (claimedChores.isNotEmpty) ...[
           const SizedBox(height: 16),
-          _buildSectionTitle('👤 Đã có người nhận', Colors.blue),
+          _buildSectionTitle('Đã có người nhận', Colors.blue),
           ...claimedChores.map((chore) => _buildOneTimeCard(chore)),
         ],
-        
+
         if (oneTimeChores.isEmpty)
           _buildEmptyState('Chưa có việc cần nhận nào', Icons.inbox),
       ],
@@ -246,7 +251,8 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
         ),
         const SizedBox(height: 16),
         if (completedChores.isEmpty)
-          _buildEmptyState('Chưa có việc hoàn thành nào', Icons.check_circle_outline)
+          _buildEmptyState(
+              'Chưa có việc hoàn thành nào', Icons.check_circle_outline)
         else
           ...completedChores.map((chore) => _buildCompletedCard(chore)),
       ],
@@ -263,15 +269,19 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
     final currentAssigneeId = chore['currentAssigneeId'] ?? '';
     final currentAssigneeName = chore['currentAssigneeName'] ?? 'Chưa giao';
     final isMyTurn = currentAssigneeId == currentUserId;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: isMyTurn ? AppColors.primary.withOpacity(0.05) : AppColors.background,
+        color: isMyTurn
+            ? AppColors.primary.withOpacity(0.05)
+            : AppColors.background,
         borderRadius: BorderRadius.circular(12),
-        border: isMyTurn ? Border.all(color: AppColors.primary, width: 2) : null,
+        border:
+            isMyTurn ? Border.all(color: AppColors.primary, width: 2) : null,
         boxShadow: const [
-          BoxShadow(color: AppColors.shadow, blurRadius: 4, offset: Offset(0, 2)),
+          BoxShadow(
+              color: AppColors.shadow, blurRadius: 4, offset: Offset(0, 2)),
         ],
       ),
       child: Column(
@@ -289,7 +299,8 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
                     color: AppColors.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.sync, color: AppColors.primary, size: 22),
+                  child: const Icon(Icons.sync,
+                      color: AppColors.primary, size: 22),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -300,17 +311,19 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
                       Row(
                         children: [
                           Expanded(
-                            child: Text(title, style: AppTextStyles.h4.copyWith(fontSize: 16)),
+                            child: Text(title,
+                                style: AppTextStyles.h4.copyWith(fontSize: 16)),
                           ),
                           if (isMyTurn)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
                                 color: AppColors.primary,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                '⭐ Lượt bạn!',
+                                'Lượt bạn',
                                 style: AppTextStyles.caption.copyWith(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
@@ -323,14 +336,16 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
                         const SizedBox(height: 4),
                         Text(
                           description,
-                          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                          style: AppTextStyles.bodySmall
+                              .copyWith(color: AppColors.textSecondary),
                         ),
                       ],
                       const SizedBox(height: 8),
                       // Người phụ trách hiện tại
                       Row(
                         children: [
-                          const Icon(Icons.person, size: 16, color: AppColors.primary),
+                          const Icon(Icons.person,
+                              size: 16, color: AppColors.primary),
                           const SizedBox(width: 4),
                           Text(
                             'Lượt của: $currentAssigneeName',
@@ -344,9 +359,11 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          _buildTag(_getFrequencyText(frequency), Icons.repeat, AppColors.info),
+                          _buildTag(_getFrequencyText(frequency), Icons.repeat,
+                              AppColors.info),
                           const SizedBox(width: 8),
-                          _buildTag('$points điểm', Icons.star_outline, AppColors.warning),
+                          _buildTag('$points điểm', Icons.star_outline,
+                              AppColors.warning),
                         ],
                       ),
                     ],
@@ -393,15 +410,20 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
     final claimedByUserName = chore['claimedByUserName'] ?? 'Unknown';
     final isClaimedByMe = claimedByUserId == currentUserId;
     final isAvailable = status == 'available';
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: isClaimedByMe ? AppColors.warning.withOpacity(0.05) : AppColors.background,
+        color: isClaimedByMe
+            ? AppColors.warning.withOpacity(0.05)
+            : AppColors.background,
         borderRadius: BorderRadius.circular(12),
-        border: isClaimedByMe ? Border.all(color: AppColors.warning, width: 2) : null,
+        border: isClaimedByMe
+            ? Border.all(color: AppColors.warning, width: 2)
+            : null,
         boxShadow: const [
-          BoxShadow(color: AppColors.shadow, blurRadius: 4, offset: Offset(0, 2)),
+          BoxShadow(
+              color: AppColors.shadow, blurRadius: 4, offset: Offset(0, 2)),
         ],
       ),
       child: Column(
@@ -416,7 +438,9 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: isAvailable ? Colors.green.withOpacity(0.1) : Colors.blue.withOpacity(0.1),
+                    color: isAvailable
+                        ? Colors.green.withOpacity(0.1)
+                        : Colors.blue.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
@@ -430,12 +454,14 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: AppTextStyles.h4.copyWith(fontSize: 16)),
+                      Text(title,
+                          style: AppTextStyles.h4.copyWith(fontSize: 16)),
                       if (description != null && description.isNotEmpty) ...[
                         const SizedBox(height: 4),
                         Text(
                           description,
-                          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                          style: AppTextStyles.bodySmall
+                              .copyWith(color: AppColors.textSecondary),
                         ),
                       ],
                       const SizedBox(height: 8),
@@ -443,10 +469,13 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
                       if (!isAvailable)
                         Row(
                           children: [
-                            const Icon(Icons.person, size: 16, color: Colors.blue),
+                            const Icon(Icons.person,
+                                size: 16, color: Colors.blue),
                             const SizedBox(width: 4),
                             Text(
-                              isClaimedByMe ? '📌 Bạn đã nhận việc này' : 'Đã nhận bởi: $claimedByUserName',
+                              isClaimedByMe
+                                  ? 'Bạn đã nhận việc này'
+                                  : 'Đã nhận bởi: $claimedByUserName',
                               style: AppTextStyles.caption.copyWith(
                                 color: Colors.blue,
                                 fontWeight: FontWeight.w600,
@@ -459,7 +488,8 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
                         children: [
                           _buildTag('Một lần', Icons.looks_one, AppColors.info),
                           const SizedBox(width: 8),
-                          _buildTag('$points điểm', Icons.star_outline, AppColors.warning),
+                          _buildTag('$points điểm', Icons.star_outline,
+                              AppColors.warning),
                         ],
                       ),
                     ],
@@ -473,14 +503,14 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
             _buildActionButton(
               onPressed: () => _claimChore(chore),
               icon: Icons.pan_tool,
-              label: '🙋 Nhận việc này',
+              label: 'Nhận việc này',
               color: Colors.green,
             ),
           if (isClaimedByMe)
             _buildActionButton(
               onPressed: () => _completeOneTimeChore(chore),
               icon: Icons.check_circle,
-              label: '✅ Hoàn thành',
+              label: 'Hoàn thành',
               color: AppColors.primary,
             ),
         ],
@@ -494,14 +524,15 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
     final points = chore['points'] ?? 10;
     final completedByUserId = chore['completedByUserId'];
     final claimedByUserName = chore['claimedByUserName'] ?? 'Unknown';
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: AppColors.success.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [
-          BoxShadow(color: AppColors.shadow, blurRadius: 4, offset: Offset(0, 2)),
+          BoxShadow(
+              color: AppColors.shadow, blurRadius: 4, offset: Offset(0, 2)),
         ],
       ),
       child: Padding(
@@ -515,7 +546,8 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
                 color: AppColors.success.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.check_circle, color: AppColors.success, size: 24),
+              child: const Icon(Icons.check_circle,
+                  color: AppColors.success, size: 24),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -532,7 +564,8 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
                   const SizedBox(height: 4),
                   Text(
                     'Hoàn thành bởi: $claimedByUserName (+$points điểm)',
-                    style: AppTextStyles.caption.copyWith(color: AppColors.success),
+                    style: AppTextStyles.caption
+                        .copyWith(color: AppColors.success),
                   ),
                 ],
               ),
@@ -544,13 +577,14 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
   }
 
   // ============ ACTIONS ============
-  
+
   Future<void> _claimChore(Map<String, dynamic> chore) async {
     final choreId = chore['id'] as String;
     try {
-      await FirestoreService.claimChore(choreId, currentUserId!, currentUserName!);
+      await FirestoreService.claimChore(
+          choreId, currentUserId!, currentUserName!);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('✅ Đã nhận việc thành công!')),
+        const SnackBar(content: Text('Đã nhận việc thành công')),
       );
       _loadChores();
     } catch (e) {
@@ -566,7 +600,8 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
     try {
       await FirestoreService.completeChore(choreId, currentUserId!);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('🎉 Hoàn thành! +$points điểm. Đã chuyển lượt.')),
+        SnackBar(
+            content: Text('Hoàn thành, cộng $points điểm và đã chuyển lượt')),
       );
       _loadChores();
     } catch (e) {
@@ -582,7 +617,7 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
     try {
       await FirestoreService.completeChore(choreId, currentUserId!);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('🎉 Hoàn thành! +$points điểm')),
+        SnackBar(content: Text('Hoàn thành, cộng $points điểm')),
       );
       _loadChores();
     } catch (e) {
@@ -616,7 +651,8 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildInfoCard(String title, String subtitle, IconData icon, Color color, String badge) {
+  Widget _buildInfoCard(
+      String title, String subtitle, IconData icon, Color color, String badge) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -638,9 +674,12 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: AppTextStyles.h4.copyWith(color: Colors.white)),
+                Text(title,
+                    style: AppTextStyles.h4.copyWith(color: Colors.white)),
                 const SizedBox(height: 4),
-                Text(subtitle, style: AppTextStyles.bodySmall.copyWith(color: Colors.white70)),
+                Text(subtitle,
+                    style: AppTextStyles.bodySmall
+                        .copyWith(color: Colors.white70)),
               ],
             ),
           ),
@@ -650,7 +689,9 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
               color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Text(badge, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: Text(badge,
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -662,7 +703,8 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
       padding: const EdgeInsets.only(bottom: 12),
       child: Text(
         title,
-        style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.bold, color: color),
+        style: AppTextStyles.bodyLarge
+            .copyWith(fontWeight: FontWeight.bold, color: color),
       ),
     );
   }
@@ -716,10 +758,14 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
 
   String _getFrequencyText(String frequency) {
     switch (frequency) {
-      case 'daily': return 'Hàng ngày';
-      case 'weekly': return 'Hàng tuần';
-      case 'monthly': return 'Hàng tháng';
-      default: return frequency;
+      case 'daily':
+        return 'Hàng ngày';
+      case 'weekly':
+        return 'Hàng tuần';
+      case 'monthly':
+        return 'Hàng tháng';
+      default:
+        return frequency;
     }
   }
 
@@ -769,7 +815,7 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
     String choreType = 'recurring'; // 'recurring' hoặc 'one-time'
     String selectedFrequency = 'daily';
     int points = 10;
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -798,7 +844,7 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('➕ Thêm việc mới', style: AppTextStyles.h3),
+                          const Text('Thêm việc mới', style: AppTextStyles.h3),
                           IconButton(
                             onPressed: () => Navigator.pop(context),
                             icon: const Icon(Icons.close),
@@ -806,34 +852,51 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
                         ],
                       ),
                       const SizedBox(height: 20),
-                      
+
                       // ========== CHỌN LOẠI VIỆC ==========
-                      Text('Loại việc', style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.bold)),
+                      Text('Loại việc',
+                          style: AppTextStyles.bodyLarge
+                              .copyWith(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 12),
                       Row(
                         children: [
                           Expanded(
                             child: GestureDetector(
-                              onTap: () => setModalState(() => choreType = 'recurring'),
+                              onTap: () =>
+                                  setModalState(() => choreType = 'recurring'),
                               child: Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: choreType == 'recurring' 
-                                      ? AppColors.primary.withOpacity(0.1) 
+                                  color: choreType == 'recurring'
+                                      ? AppColors.primary.withOpacity(0.1)
                                       : Colors.grey.shade100,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: choreType == 'recurring' ? AppColors.primary : Colors.grey.shade300,
+                                    color: choreType == 'recurring'
+                                        ? AppColors.primary
+                                        : Colors.grey.shade300,
                                     width: 2,
                                   ),
                                 ),
                                 child: Column(
                                   children: [
-                                    Icon(Icons.sync, size: 32, color: choreType == 'recurring' ? AppColors.primary : Colors.grey),
+                                    Icon(Icons.sync,
+                                        size: 32,
+                                        color: choreType == 'recurring'
+                                            ? AppColors.primary
+                                            : Colors.grey),
                                     const SizedBox(height: 8),
-                                    Text('🔄 Xoay vòng', style: TextStyle(fontWeight: FontWeight.bold, color: choreType == 'recurring' ? AppColors.primary : Colors.grey.shade600)),
+                                    Text('Xoay vòng',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: choreType == 'recurring'
+                                                ? AppColors.primary
+                                                : Colors.grey.shade600)),
                                     const SizedBox(height: 4),
-                                    Text('Tự động luân phiên', style: AppTextStyles.caption.copyWith(color: Colors.grey.shade600), textAlign: TextAlign.center),
+                                    Text('Tự động luân phiên',
+                                        style: AppTextStyles.caption.copyWith(
+                                            color: Colors.grey.shade600),
+                                        textAlign: TextAlign.center),
                                   ],
                                 ),
                               ),
@@ -842,26 +905,41 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
                           const SizedBox(width: 12),
                           Expanded(
                             child: GestureDetector(
-                              onTap: () => setModalState(() => choreType = 'one-time'),
+                              onTap: () =>
+                                  setModalState(() => choreType = 'one-time'),
                               child: Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: choreType == 'one-time' 
-                                      ? AppColors.warning.withOpacity(0.1) 
+                                  color: choreType == 'one-time'
+                                      ? AppColors.warning.withOpacity(0.1)
                                       : Colors.grey.shade100,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: choreType == 'one-time' ? AppColors.warning : Colors.grey.shade300,
+                                    color: choreType == 'one-time'
+                                        ? AppColors.warning
+                                        : Colors.grey.shade300,
                                     width: 2,
                                   ),
                                 ),
                                 child: Column(
                                   children: [
-                                    Icon(Icons.assignment, size: 32, color: choreType == 'one-time' ? AppColors.warning : Colors.grey),
+                                    Icon(Icons.assignment,
+                                        size: 32,
+                                        color: choreType == 'one-time'
+                                            ? AppColors.warning
+                                            : Colors.grey),
                                     const SizedBox(height: 8),
-                                    Text('📋 Tự nhận', style: TextStyle(fontWeight: FontWeight.bold, color: choreType == 'one-time' ? AppColors.warning : Colors.grey.shade600)),
+                                    Text('Tự nhận',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: choreType == 'one-time'
+                                                ? AppColors.warning
+                                                : Colors.grey.shade600)),
                                     const SizedBox(height: 4),
-                                    Text('Ai muốn làm thì nhận', style: AppTextStyles.caption.copyWith(color: Colors.grey.shade600), textAlign: TextAlign.center),
+                                    Text('Ai muốn làm thì nhận',
+                                        style: AppTextStyles.caption.copyWith(
+                                            color: Colors.grey.shade600),
+                                        textAlign: TextAlign.center),
                                   ],
                                 ),
                               ),
@@ -870,19 +948,22 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
                         ],
                       ),
                       const SizedBox(height: 20),
-                      
+
                       // ========== TÊN VIỆC ==========
                       TextField(
                         controller: titleController,
                         decoration: InputDecoration(
                           labelText: 'Tên việc *',
-                          hintText: choreType == 'recurring' ? 'Ví dụ: Rửa bát, Đổ rác' : 'Ví dụ: Mua đồ ăn, Dọn kho',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          hintText: choreType == 'recurring'
+                              ? 'Ví dụ: Rửa bát, Đổ rác'
+                              : 'Ví dụ: Mua đồ ăn, Dọn kho',
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8)),
                           prefixIcon: const Icon(Icons.cleaning_services),
                         ),
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // ========== MÔ TẢ ==========
                       TextField(
                         controller: descController,
@@ -890,36 +971,45 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
                         decoration: InputDecoration(
                           labelText: 'Mô tả (tùy chọn)',
                           hintText: 'Chi tiết công việc...',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8)),
                           prefixIcon: const Icon(Icons.description),
                         ),
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // ========== TẦN SUẤT (chỉ cho recurring) ==========
                       if (choreType == 'recurring') ...[
-                        Text('Tần suất', style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.bold)),
+                        Text('Tần suất',
+                            style: AppTextStyles.bodyLarge
+                                .copyWith(fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            _buildFrequencyChip('Hàng ngày', 'daily', selectedFrequency, (f) {
+                            _buildFrequencyChip(
+                                'Hàng ngày', 'daily', selectedFrequency, (f) {
                               setModalState(() => selectedFrequency = f);
                             }),
                             const SizedBox(width: 8),
-                            _buildFrequencyChip('Hàng tuần', 'weekly', selectedFrequency, (f) {
+                            _buildFrequencyChip(
+                                'Hàng tuần', 'weekly', selectedFrequency, (f) {
                               setModalState(() => selectedFrequency = f);
                             }),
                             const SizedBox(width: 8),
-                            _buildFrequencyChip('Hàng tháng', 'monthly', selectedFrequency, (f) {
+                            _buildFrequencyChip(
+                                'Hàng tháng', 'monthly', selectedFrequency,
+                                (f) {
                               setModalState(() => selectedFrequency = f);
                             }),
                           ],
                         ),
                         const SizedBox(height: 16),
                       ],
-                      
+
                       // ========== ĐIỂM THƯỞNG ==========
-                      Text('Điểm thưởng', style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.bold)),
+                      Text('Điểm thưởng',
+                          style: AppTextStyles.bodyLarge
+                              .copyWith(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
                       Row(
                         children: [5, 10, 15, 20].map((p) {
@@ -929,30 +1019,35 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
                             child: ChoiceChip(
                               label: Text('$p điểm'),
                               selected: isSelected,
-                              onSelected: (_) => setModalState(() => points = p),
+                              onSelected: (_) =>
+                                  setModalState(() => points = p),
                               selectedColor: AppColors.primary,
                             ),
                           );
                         }).toList(),
                       ),
                       const SizedBox(height: 24),
-                      
+
                       // ========== BUTTON TẠO ==========
                       CustomButton(
-                        text: choreType == 'recurring' ? '🔄 Tạo việc xoay vòng' : '📋 Tạo việc tự nhận',
+                        text: choreType == 'recurring'
+                            ? 'Tạo việc xoay vòng'
+                            : 'Tạo việc tự nhận',
                         onPressed: () async {
                           if (titleController.text.trim().isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Vui lòng nhập tên việc')),
+                              const SnackBar(
+                                  content: Text('Vui lòng nhập tên việc')),
                             );
                             return;
                           }
-                          
+
                           try {
-                            if (currentHouseId == null || currentHouseId!.isEmpty) {
+                            if (currentHouseId == null ||
+                                currentHouseId!.isEmpty) {
                               throw Exception('Chưa tham gia phòng nào');
                             }
-                            
+
                             if (choreType == 'recurring') {
                               await FirestoreService.createRecurringChore(
                                 houseId: currentHouseId!,
@@ -969,17 +1064,22 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
                                 points: points,
                               );
                             }
-                            
+
                             if (mounted) {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(choreType == 'recurring' ? '✅ Đã tạo việc xoay vòng!' : '✅ Đã tạo việc tự nhận!')),
+                                SnackBar(
+                                    content: Text(choreType == 'recurring'
+                                        ? 'Đã tạo việc xoay vòng'
+                                        : 'Đã tạo việc tự nhận')),
                               );
                               _loadChores();
                             }
                           } catch (e) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Lỗi: ${e.toString().replaceAll('Exception: ', '')}')),
+                              SnackBar(
+                                  content: Text(
+                                      'Lỗi: ${e.toString().replaceAll('Exception: ', '')}')),
                             );
                           }
                         },
@@ -994,8 +1094,9 @@ class _ChoresScreenState extends State<ChoresScreen> with SingleTickerProviderSt
       },
     );
   }
-  
-  Widget _buildFrequencyChip(String label, String value, String selected, Function(String) onTap) {
+
+  Widget _buildFrequencyChip(
+      String label, String value, String selected, Function(String) onTap) {
     final isSelected = selected == value;
     return GestureDetector(
       onTap: () => onTap(value),

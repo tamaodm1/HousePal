@@ -522,7 +522,7 @@ class _BulletinScreenState extends State<BulletinScreen>
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {},
+          onTap: () => _showNoteDetailFromMap(note),
           borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -585,6 +585,44 @@ class _BulletinScreenState extends State<BulletinScreen>
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showNoteDetailFromMap(Map<String, dynamic> note) {
+    final title = (note['title'] ?? 'Ghi chú').toString();
+    final content = (note['content'] ?? '').toString();
+    final author = (note['createdByName'] ?? 'Unknown').toString();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(child: Text(title, style: AppTextStyles.h3)),
+                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+                ],
+              ),
+              Text('Bởi: $author', style: AppTextStyles.caption),
+              const SizedBox(height: 12),
+              Text(content, style: AppTextStyles.bodyMedium),
+              const SizedBox(height: 16),
+            ],
           ),
         ),
       ),

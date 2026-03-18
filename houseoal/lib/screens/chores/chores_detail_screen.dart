@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/colors.dart';
 import '../../core/constants/text_styles.dart';
-import '../../core/widgets/custom_button.dart';
+import '../../core/widgets/user_avatar.dart';
 import '../../services/firestore_service.dart';
 import '../../services/auth_service.dart';
 
@@ -15,12 +15,12 @@ class ChoresDetailScreen extends StatefulWidget {
 class _ChoresDetailScreenState extends State<ChoresDetailScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
+
   // Data từ Firebase - 2 loại việc
   List<Map<String, dynamic>> recurringChores = []; // Việc xoay vòng
-  List<Map<String, dynamic>> oneTimeChores = [];   // Việc tự nhận
+  List<Map<String, dynamic>> oneTimeChores = []; // Việc tự nhận
   List<Map<String, dynamic>> leaderboard = [];
-  
+
   String? currentUserId;
   String? currentUserName;
   String? currentHouseId;
@@ -44,7 +44,7 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
 
       currentUserId = await AuthService.getFirebaseUserId();
       currentHouseId = await AuthService.getFirebaseHouseId();
-      
+
       if (currentHouseId == null || currentHouseId!.isEmpty) {
         setState(() {
           isLoading = false;
@@ -56,11 +56,11 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
       // Lấy thông tin user
       final userData = await FirestoreService.getUserById(currentUserId!);
       currentUserName = userData?['name'] ?? 'User';
-      
+
       // Kiểm tra admin (owner của house)
       final houseData = await FirestoreService.getHouseById(currentHouseId!);
       final ownerId = houseData?['ownerId'];
-      
+
       // Nếu house cũ chưa có owner, set user hiện tại làm owner
       if (ownerId == null || ownerId.toString().isEmpty) {
         await FirestoreService.setHouseOwner(currentHouseId!, currentUserId!);
@@ -68,14 +68,16 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
       } else {
         isAdmin = ownerId == currentUserId;
       }
-      
+
       // Load 2 loại chores
-      final recurring = await FirestoreService.getRecurringChores(currentHouseId!);
+      final recurring =
+          await FirestoreService.getRecurringChores(currentHouseId!);
       final oneTime = await FirestoreService.getOneTimeChores(currentHouseId!);
-      
+
       // Load leaderboard
       final members = await FirestoreService.getHouseMembers(currentHouseId!);
-      members.sort((a, b) => ((b['chorePoints'] as num?) ?? 0).compareTo((a['chorePoints'] as num?) ?? 0));
+      members.sort((a, b) => ((b['chorePoints'] as num?) ?? 0)
+          .compareTo((a['chorePoints'] as num?) ?? 0));
 
       setState(() {
         recurringChores = recurring;
@@ -131,7 +133,8 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
                             color: Colors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(Icons.arrow_back, color: Colors.black),
+                          child:
+                              const Icon(Icons.arrow_back, color: Colors.black),
                         ),
                       ),
                       IconButton(
@@ -143,11 +146,14 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
                   const SizedBox(height: 16),
                   const Text(
                     'Việc nhà',
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black),
+                    style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '🏠 Quản lý & xoay vòng công việc',
+                    'Quản lý và xoay vòng công việc',
                     style: const TextStyle(fontSize: 14, color: Colors.black54),
                   ),
                   const SizedBox(height: 20),
@@ -172,11 +178,12 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
                       ),
                       labelColor: Colors.black,
                       unselectedLabelColor: Colors.black54,
-                      labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                      labelStyle: const TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.w600),
                       tabs: const [
-                        Tab(text: '🔄 Xoay vòng'),
-                        Tab(text: '📋 Tự nhận'),
-                        Tab(text: '🏆 Xếp hạng'),
+                        Tab(text: 'Xoay vòng'),
+                        Tab(text: 'Tự nhận'),
+                        Tab(text: 'Xếp hạng'),
                       ],
                     ),
                   ),
@@ -195,7 +202,9 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
                           children: [
                             Text('Lỗi: $errorMessage'),
                             const SizedBox(height: 16),
-                            ElevatedButton(onPressed: _loadData, child: const Text('Thử lại')),
+                            ElevatedButton(
+                                onPressed: _loadData,
+                                child: const Text('Thử lại')),
                           ],
                         ),
                       )
@@ -223,7 +232,8 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
   // ============ TAB XOAY VÒNG ============
   Widget _buildRecurringTab() {
     if (recurringChores.isEmpty) {
-      return _buildEmptyState('Chưa có việc xoay vòng', Icons.sync_disabled, 'Việc xoay vòng tự động luân phiên giữa các thành viên');
+      return _buildEmptyState('Chưa có việc xoay vòng', Icons.sync_disabled,
+          'Việc xoay vòng tự động luân phiên giữa các thành viên');
     }
     return ListView(
       padding: const EdgeInsets.all(20),
@@ -235,23 +245,28 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
 
   // ============ TAB TỰ NHẬN ============
   Widget _buildOneTimeTab() {
-    final availableChores = oneTimeChores.where((c) => c['status'] == 'available').toList();
-    final claimedChores = oneTimeChores.where((c) => c['status'] == 'claimed').toList();
-    
+    final availableChores =
+        oneTimeChores.where((c) => c['status'] == 'available').toList();
+    final claimedChores =
+        oneTimeChores.where((c) => c['status'] == 'claimed').toList();
+
     if (oneTimeChores.isEmpty) {
-      return _buildEmptyState('Chưa có việc cần nhận', Icons.inbox, 'Việc tự nhận ai muốn làm thì nhận');
+      return _buildEmptyState('Chưa có việc cần nhận', Icons.inbox,
+          'Việc tự nhận ai muốn làm thì nhận');
     }
-    
+
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
         if (availableChores.isNotEmpty) ...[
-          _buildSectionHeader('🆕 Đang chờ nhận', Colors.green, availableChores.length),
+          _buildSectionHeader(
+              'Đang chờ nhận', Colors.green, availableChores.length),
           ...availableChores.map((chore) => _buildOneTimeCard(chore)),
         ],
         if (claimedChores.isNotEmpty) ...[
           const SizedBox(height: 16),
-          _buildSectionHeader('👤 Đã có người nhận', Colors.blue, claimedChores.length),
+          _buildSectionHeader(
+              'Đã có người nhận', Colors.blue, claimedChores.length),
           ...claimedChores.map((chore) => _buildOneTimeCard(chore)),
         ],
       ],
@@ -260,7 +275,6 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
 
   // ============ CARD VIỆC XOAY VÒNG ============
   Widget _buildRecurringCard(Map<String, dynamic> chore) {
-    final choreId = chore['id'] as String;
     final title = chore['title'] ?? 'Việc';
     final description = chore['description'] as String?;
     final frequency = chore['frequency'] ?? 'daily';
@@ -268,7 +282,7 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
     final currentAssigneeId = chore['currentAssigneeId'] ?? '';
     final currentAssigneeName = chore['currentAssigneeName'] ?? 'Chưa giao';
     final isMyTurn = currentAssigneeId == currentUserId;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -278,9 +292,14 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
           color: isMyTurn ? AppColors.primary : Colors.grey.shade300,
           width: isMyTurn ? 2 : 1,
         ),
-        boxShadow: isMyTurn ? [
-          BoxShadow(color: AppColors.primary.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, 4)),
-        ] : null,
+        boxShadow: isMyTurn
+            ? [
+                BoxShadow(
+                    color: AppColors.primary.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4)),
+              ]
+            : null,
       ),
       child: Column(
         children: [
@@ -299,27 +318,37 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
                         color: AppColors.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.sync, color: AppColors.primary, size: 20),
+                      child: const Icon(Icons.sync,
+                          color: AppColors.primary, size: 20),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          Text(title,
+                              style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold)),
                           if (description != null && description.isNotEmpty)
-                            Text(description, style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+                            Text(description,
+                                style: TextStyle(
+                                    fontSize: 13, color: Colors.grey.shade600)),
                         ],
                       ),
                     ),
                     if (isMyTurn)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: AppColors.primary,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Text('⭐ Lượt bạn!', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                        child: const Text('Lượt bạn',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold)),
                       ),
                   ],
                 ),
@@ -327,15 +356,20 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
                 // Info row
                 Row(
                   children: [
-                    const Icon(Icons.person, size: 16, color: AppColors.primary),
+                    const Icon(Icons.person,
+                        size: 16, color: AppColors.primary),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         'Lượt của: $currentAssigneeName',
-                        style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 13),
+                        style: const TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13),
                       ),
                     ),
-                    _buildTag(_getFrequencyText(frequency), _getFrequencyColor(frequency)),
+                    _buildTag(_getFrequencyText(frequency),
+                        _getFrequencyColor(frequency)),
                     const SizedBox(width: 8),
                     _buildTag('$points điểm', Colors.orange),
                   ],
@@ -357,9 +391,11 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
               ),
               child: ElevatedButton.icon(
                 onPressed: () => _completeRecurringChore(chore),
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary),
                 icon: const Icon(Icons.check_circle, color: Colors.white),
-                label: const Text('Hoàn thành & Chuyển lượt', style: TextStyle(color: Colors.white)),
+                label: const Text('Hoàn thành & Chuyển lượt',
+                    style: TextStyle(color: Colors.white)),
               ),
             ),
         ],
@@ -369,7 +405,6 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
 
   // ============ CARD VIỆC TỰ NHẬN ============
   Widget _buildOneTimeCard(Map<String, dynamic> chore) {
-    final choreId = chore['id'] as String;
     final title = chore['title'] ?? 'Việc';
     final description = chore['description'] as String?;
     final points = chore['points'] ?? 10;
@@ -378,14 +413,16 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
     final claimedByUserName = chore['claimedByUserName'] ?? 'Unknown';
     final isClaimedByMe = claimedByUserId == currentUserId;
     final isAvailable = status == 'available';
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isClaimedByMe ? Colors.orange : (isAvailable ? Colors.green : Colors.blue),
+          color: isClaimedByMe
+              ? Colors.orange
+              : (isAvailable ? Colors.green : Colors.blue),
           width: isClaimedByMe ? 2 : 1,
         ),
       ),
@@ -402,7 +439,8 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: (isAvailable ? Colors.green : Colors.blue).withOpacity(0.1),
+                        color: (isAvailable ? Colors.green : Colors.blue)
+                            .withOpacity(0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
@@ -416,9 +454,13 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          Text(title,
+                              style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold)),
                           if (description != null && description.isNotEmpty)
-                            Text(description, style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+                            Text(description,
+                                style: TextStyle(
+                                    fontSize: 13, color: Colors.grey.shade600)),
                         ],
                       ),
                     ),
@@ -432,8 +474,13 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
                       const Icon(Icons.person, size: 16, color: Colors.blue),
                       const SizedBox(width: 4),
                       Text(
-                        isClaimedByMe ? '📌 Bạn đã nhận việc này' : 'Đã nhận bởi: $claimedByUserName',
-                        style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.w600, fontSize: 13),
+                        isClaimedByMe
+                            ? 'Bạn đã nhận việc này'
+                            : 'Đã nhận bởi: $claimedByUserName',
+                        style: const TextStyle(
+                            color: Colors.blue,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13),
                       ),
                     ],
                   ),
@@ -445,13 +492,13 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
           if (isAvailable)
             _buildCardButton(
               onPressed: () => _claimChore(chore),
-              label: '🙋 Nhận việc này',
+              label: 'Nhận việc này',
               color: Colors.green,
             ),
           if (isClaimedByMe)
             _buildCardButton(
               onPressed: () => _completeOneTimeChore(chore),
-              label: '✅ Hoàn thành',
+              label: 'Hoàn thành',
               color: AppColors.primary,
             ),
         ],
@@ -460,7 +507,7 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
   }
 
   // ============ HELPER WIDGETS ============
-  
+
   Widget _buildTag(String label, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -468,11 +515,16 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
         color: color.withOpacity(0.15),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Text(label, style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600)),
+      child: Text(label,
+          style: TextStyle(
+              fontSize: 11, color: color, fontWeight: FontWeight.w600)),
     );
   }
 
-  Widget _buildCardButton({required VoidCallback onPressed, required String label, required Color color}) {
+  Widget _buildCardButton(
+      {required VoidCallback onPressed,
+      required String label,
+      required Color color}) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -486,7 +538,9 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(backgroundColor: color),
-        child: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        child: Text(label,
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.bold)),
       ),
     );
   }
@@ -496,12 +550,18 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
+          Text(title,
+              style: TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.bold, color: color)),
           const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(color: color.withOpacity(0.2), borderRadius: BorderRadius.circular(10)),
-            child: Text('$count', style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.bold)),
+            decoration: BoxDecoration(
+                color: color.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10)),
+            child: Text('$count',
+                style: TextStyle(
+                    fontSize: 12, color: color, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -517,16 +577,23 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
           children: [
             Icon(icon, size: 64, color: Colors.grey.shade300),
             const SizedBox(height: 16),
-            Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey.shade600)),
+            Text(title,
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade600)),
             const SizedBox(height: 8),
-            Text(subtitle, style: TextStyle(fontSize: 14, color: Colors.grey.shade500), textAlign: TextAlign.center),
+            Text(subtitle,
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+                textAlign: TextAlign.center),
             if (isAdmin) ...[
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: _showAddChoreDialog,
                 icon: const Icon(Icons.add),
                 label: const Text('Thêm việc mới'),
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary),
               ),
             ],
           ],
@@ -537,32 +604,43 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
 
   String _getFrequencyText(String frequency) {
     switch (frequency) {
-      case 'daily': return 'Hàng ngày';
-      case 'weekly': return 'Hàng tuần';
-      case 'monthly': return 'Hàng tháng';
-      default: return frequency;
+      case 'daily':
+        return 'Hàng ngày';
+      case 'weekly':
+        return 'Hàng tuần';
+      case 'monthly':
+        return 'Hàng tháng';
+      default:
+        return frequency;
     }
   }
 
   Color _getFrequencyColor(String frequency) {
     switch (frequency) {
-      case 'daily': return Colors.red;
-      case 'weekly': return Colors.blue;
-      case 'monthly': return Colors.purple;
-      default: return Colors.grey;
+      case 'daily':
+        return Colors.red;
+      case 'weekly':
+        return Colors.blue;
+      case 'monthly':
+        return Colors.purple;
+      default:
+        return Colors.grey;
     }
   }
 
   // ============ ACTIONS ============
-  
+
   Future<void> _claimChore(Map<String, dynamic> chore) async {
     final choreId = chore['id'] as String;
     try {
-      await FirestoreService.claimChore(choreId, currentUserId!, currentUserName!);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('✅ Đã nhận việc thành công!')));
+      await FirestoreService.claimChore(
+          choreId, currentUserId!, currentUserName!);
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đã nhận việc thành công')));
       _loadData();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: ${e.toString()}')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Lỗi: ${e.toString()}')));
     }
   }
 
@@ -571,10 +649,12 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
     final points = chore['points'] ?? 10;
     try {
       await FirestoreService.completeChore(choreId, currentUserId!);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('🎉 Hoàn thành! +$points điểm. Đã chuyển lượt.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Hoàn thành, cộng $points điểm và đã chuyển lượt')));
       _loadData();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: ${e.toString()}')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Lỗi: ${e.toString()}')));
     }
   }
 
@@ -583,10 +663,12 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
     final points = chore['points'] ?? 10;
     try {
       await FirestoreService.completeChore(choreId, currentUserId!);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('🎉 Hoàn thành! +$points điểm')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Hoàn thành, cộng $points điểm')));
       _loadData();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: ${e.toString()}')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Lỗi: ${e.toString()}')));
     }
   }
 
@@ -597,7 +679,7 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
     String choreType = 'recurring';
     String selectedFrequency = 'daily';
     int points = 10;
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -606,10 +688,13 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Container(
-              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+              padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom),
               decoration: const BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
+                borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20)),
               ),
               child: SingleChildScrollView(
                 child: Padding(
@@ -621,49 +706,71 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('➕ Thêm việc mới', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                          IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+                          const Text('Thêm việc mới',
+                              style: TextStyle(
+                                  fontSize: 20, fontWeight: FontWeight.bold)),
+                          IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(Icons.close)),
                         ],
                       ),
                       const SizedBox(height: 20),
-                      
+
                       // Chọn loại
-                      const Text('Loại việc', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const Text('Loại việc',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          Expanded(child: _buildTypeSelector('🔄 Xoay vòng', 'Tự động luân phiên', choreType == 'recurring', () => setModalState(() => choreType = 'recurring'))),
+                          Expanded(
+                              child: _buildTypeSelector(
+                                  'Xoay vòng',
+                                  'Tự động luân phiên',
+                                  choreType == 'recurring',
+                                  () => setModalState(
+                                      () => choreType = 'recurring'))),
                           const SizedBox(width: 12),
-                          Expanded(child: _buildTypeSelector('📋 Tự nhận', 'Ai muốn thì nhận', choreType == 'one-time', () => setModalState(() => choreType = 'one-time'))),
+                          Expanded(
+                              child: _buildTypeSelector(
+                                  'Tự nhận',
+                                  'Ai muốn thì nhận',
+                                  choreType == 'one-time',
+                                  () => setModalState(
+                                      () => choreType = 'one-time'))),
                         ],
                       ),
                       const SizedBox(height: 20),
-                      
+
                       // Tên việc
                       TextField(
                         controller: titleController,
                         decoration: InputDecoration(
                           labelText: 'Tên việc *',
-                          hintText: choreType == 'recurring' ? 'VD: Rửa bát, Đổ rác' : 'VD: Mua đồ ăn',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          hintText: choreType == 'recurring'
+                              ? 'VD: Rửa bát, Đổ rác'
+                              : 'VD: Mua đồ ăn',
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8)),
                         ),
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // Mô tả
                       TextField(
                         controller: descController,
                         maxLines: 2,
                         decoration: InputDecoration(
                           labelText: 'Mô tả (tùy chọn)',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8)),
                         ),
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // Tần suất (chỉ recurring)
                       if (choreType == 'recurring') ...[
-                        const Text('Tần suất', style: TextStyle(fontWeight: FontWeight.bold)),
+                        const Text('Tần suất',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         Row(
                           children: ['daily', 'weekly', 'monthly'].map((f) {
@@ -673,17 +780,20 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
                               child: ChoiceChip(
                                 label: Text(_getFrequencyText(f)),
                                 selected: isSelected,
-                                onSelected: (_) => setModalState(() => selectedFrequency = f),
-                                selectedColor: _getFrequencyColor(f).withOpacity(0.3),
+                                onSelected: (_) =>
+                                    setModalState(() => selectedFrequency = f),
+                                selectedColor:
+                                    _getFrequencyColor(f).withOpacity(0.3),
                               ),
                             );
                           }).toList(),
                         ),
                         const SizedBox(height: 16),
                       ],
-                      
+
                       // Điểm
-                      const Text('Điểm thưởng', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const Text('Điểm thưởng',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
                       Row(
                         children: [5, 10, 15, 20].map((p) {
@@ -692,21 +802,24 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
                             child: ChoiceChip(
                               label: Text('$p điểm'),
                               selected: points == p,
-                              onSelected: (_) => setModalState(() => points = p),
+                              onSelected: (_) =>
+                                  setModalState(() => points = p),
                               selectedColor: Colors.orange.withOpacity(0.3),
                             ),
                           );
                         }).toList(),
                       ),
                       const SizedBox(height: 24),
-                      
+
                       // Button tạo
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () async {
                             if (titleController.text.trim().isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng nhập tên việc')));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('Vui lòng nhập tên việc')));
                               return;
                             }
                             try {
@@ -728,15 +841,26 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
                               }
                               if (mounted) {
                                 Navigator.pop(context);
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ Đã tạo ${choreType == 'recurring' ? 'việc xoay vòng' : 'việc tự nhận'}!')));
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                    content: Text(
+                                        'Đã tạo ${choreType == 'recurring' ? 'việc xoay vòng' : 'việc tự nhận'}')));
                                 _loadData();
                               }
                             } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Lỗi: $e')));
                             }
                           },
-                          style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, padding: const EdgeInsets.all(16)),
-                          child: Text(choreType == 'recurring' ? '🔄 Tạo việc xoay vòng' : '📋 Tạo việc tự nhận', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              padding: const EdgeInsets.all(16)),
+                          child: Text(
+                              choreType == 'recurring'
+                                  ? 'Tạo việc xoay vòng'
+                                  : 'Tạo việc tự nhận',
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold)),
                         ),
                       ),
                     ],
@@ -750,21 +874,32 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
     );
   }
 
-  Widget _buildTypeSelector(String title, String subtitle, bool isSelected, VoidCallback onTap) {
+  Widget _buildTypeSelector(
+      String title, String subtitle, bool isSelected, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.grey.shade100,
+          color: isSelected
+              ? AppColors.primary.withOpacity(0.1)
+              : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isSelected ? AppColors.primary : Colors.grey.shade300, width: 2),
+          border: Border.all(
+              color: isSelected ? AppColors.primary : Colors.grey.shade300,
+              width: 2),
         ),
         child: Column(
           children: [
-            Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? AppColors.primary : Colors.grey.shade600)),
+            Text(title,
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color:
+                        isSelected ? AppColors.primary : Colors.grey.shade600)),
             const SizedBox(height: 4),
-            Text(subtitle, style: TextStyle(fontSize: 11, color: Colors.grey.shade600), textAlign: TextAlign.center),
+            Text(subtitle,
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                textAlign: TextAlign.center),
           ],
         ),
       ),
@@ -837,7 +972,7 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
           ),
         ),
         const SizedBox(height: 24),
-        
+
         // Top 3 Podium
         if (leaderboard.length >= 3) ...[
           Row(
@@ -848,7 +983,7 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
                 child: _buildPodiumCard(
                   leaderboard[1],
                   height: 140,
-                  medal: '🥈',
+                  rankLabel: 'Hạng 2',
                 ),
               ),
               const SizedBox(width: 8),
@@ -857,7 +992,7 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
                 child: _buildPodiumCard(
                   leaderboard[0],
                   height: 180,
-                  medal: '🥇',
+                  rankLabel: 'Hạng 1',
                 ),
               ),
               const SizedBox(width: 8),
@@ -866,14 +1001,14 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
                 child: _buildPodiumCard(
                   leaderboard[2],
                   height: 120,
-                  medal: '🥉',
+                  rankLabel: 'Hạng 3',
                 ),
               ),
             ],
           ),
           const SizedBox(height: 24),
         ],
-        
+
         // Ranking List
         Text(
           'Xếp hạng',
@@ -885,12 +1020,14 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
           final user = entry.value;
           final rank = index + 1;
           final isTopThree = rank <= 3;
-          
+
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isTopThree ? AppColors.primary.withOpacity(0.1) : Colors.white,
+              color: isTopThree
+                  ? AppColors.primary.withOpacity(0.1)
+                  : Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isTopThree ? AppColors.primary : const Color(0xFFE0E0E0),
@@ -902,7 +1039,8 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: isTopThree ? AppColors.primary : Colors.grey.shade200,
+                    color:
+                        isTopThree ? AppColors.primary : Colors.grey.shade200,
                     shape: BoxShape.circle,
                   ),
                   child: Center(
@@ -915,6 +1053,13 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
                       ),
                     ),
                   ),
+                ),
+                const SizedBox(width: 12),
+                UserAvatar(
+                  name: (user['name'] ?? '').toString(),
+                  avatarUrl: (user['avatarUrl'] ?? '').toString(),
+                  avatarBase64: (user['avatarBase64'] ?? '').toString(),
+                  radius: 18,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -931,7 +1076,8 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.star_rounded, size: 14, color: Color(0xFFFFA500)),
+                          const Icon(Icons.star_rounded,
+                              size: 14, color: Color(0xFFFFA500)),
                           const SizedBox(width: 4),
                           Text(
                             '${user['chorePoints'] ?? 0} điểm',
@@ -946,9 +1092,11 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: isTopThree ? AppColors.primary : Colors.grey.shade200,
+                    color:
+                        isTopThree ? AppColors.primary : Colors.grey.shade200,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -968,34 +1116,34 @@ class _ChoresDetailScreenState extends State<ChoresDetailScreen>
     );
   }
 
-  Widget _buildPodiumCard(Map<String, dynamic> user, {required double height, required String medal}) {
+  Widget _buildPodiumCard(Map<String, dynamic> user,
+      {required double height, required String rankLabel}) {
     final name = user['name'] ?? 'Unknown';
     final chorePoints = user['chorePoints'] ?? 0;
-    
+
     return Column(
       children: [
-        Text(
-          medal,
-          style: const TextStyle(fontSize: 24),
-        ),
-        const SizedBox(height: 8),
         Container(
-          width: 60,
-          height: 60,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.2),
-            shape: BoxShape.circle,
+            color: AppColors.primary.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(999),
           ),
-          child: Center(
-            child: Text(
-              name.isNotEmpty ? name[0].toUpperCase() : '?',
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
+          child: Text(
+            rankLabel,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppColors.primary,
             ),
           ),
+        ),
+        const SizedBox(height: 8),
+        UserAvatar(
+          name: name,
+          avatarUrl: (user['avatarUrl'] ?? '').toString(),
+          avatarBase64: (user['avatarBase64'] ?? '').toString(),
+          radius: 30,
         ),
         const SizedBox(height: 8),
         Text(

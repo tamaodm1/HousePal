@@ -37,6 +37,7 @@ dependencies:
   # Network
   http: ^1.1.0
   dio: ^5.3.0
+  image_picker: ^1.1.2
   
   # Firebase - Firestore only
   firebase_core: ^2.13.0

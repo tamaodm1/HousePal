@@ -19,6 +19,7 @@ import '../screens/bulletin/add_note_screen.dart';
 import '../screens/bulletin/add_shopping_item_screen.dart';
 import '../screens/notifications/notifications_screen.dart';
 import '../screens/settings/settings_screen.dart';
+import '../screens/settings/profile_info_screen.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -41,6 +42,7 @@ class AppRoutes {
   static const String addShoppingItem = '/add-shopping-item';
   static const String notifications = '/notifications';
   static const String settings = '/settings';
+  static const String profileInfo = '/profile-info';
 
   static Map<String, WidgetBuilder> routes = {
     splash: (context) => const SplashScreen(),
@@ -63,6 +65,7 @@ class AppRoutes {
     addShoppingItem: (context) => const AddShoppingItemScreen(),
     notifications: (context) => const NotificationsScreen(),
     settings: (context) => const SettingsScreen(),
+    profileInfo: (context) => const ProfileInfoScreen(),
   };
 
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
