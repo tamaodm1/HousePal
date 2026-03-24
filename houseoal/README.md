@@ -1,5 +1,7 @@
 # HousePal - Ứng dụng Quản lý Nhà trọ
 
+> Lưu ý: Backend .NET API đã được loại bỏ khỏi repository; hiện tại app dùng trực tiếp Firebase (Firestore, Auth, Storage) để lưu trữ và đồng bộ dữ liệu.
+
 ## Giới thiệu
 HousePal là một ứng dụng di động Flutter giúp quản lý cuộc sống chung trong nhà trọ/chung cư một cách hiệu quả, minh bạch và công bằng.
 
