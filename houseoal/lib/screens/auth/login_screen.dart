@@ -3,8 +3,7 @@ import '../../core/constants/colors.dart';
 import '../../core/constants/text_styles.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_input.dart';
-import '../../services/firestore_service.dart';
-import '../../services/auth_service.dart';
+import '../../routes/app_routes.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -80,33 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _showForgotPasswordDialog() {
-    final emailCtrl = TextEditingController(text: _emailController.text.trim());
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Khôi phục mật khẩu'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: emailCtrl,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(labelText: 'Email đã đăng ký'),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'Bản hiện tại dùng Firestore auth nội bộ. Bạn gửi email cho admin để được đặt lại mật khẩu.',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Đóng')),
-        ],
-      ),
-    );
+    Navigator.pushNamed(context, AppRoutes.forgotPassword);
   }
 
   @override

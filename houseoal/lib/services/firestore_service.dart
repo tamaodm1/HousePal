@@ -1489,4 +1489,128 @@ class FirestoreService {
     }
     return code;
   }
+
+  /// Reset password - tạo reset token và gửi thông báo
+  static Future<Map<String, dynamic>> resetPassword(String email) async {
+    try {
+      final query = await _db
+          .collection('users')
+          .where('email', isEqualTo: email.toLowerCase())
+          .get();
+
+      if (query.docs.isEmpty) {
+        return {
+          'success': false,
+          'message': 'Email không tồn tại trong hệ thống',
+        };
+      }
+
+      final userDoc = query.docs.first;
+      final userData = userDoc.data();
+      final userId = userDoc.id;
+
+      // Tạo reset token (sử dụng timestamp + random)
+      final resetToken = '${DateTime.now().millisecondsSinceEpoch}_${userId.substring(0, 8)}';
+      final resetExpiry = DateTime.now().add(const Duration(hours: 24)); // Token hết hạn sau 24h
+
+      // Lưu reset token vào user document
+      await _db.collection('users').doc(userId).update({
+        'resetToken': resetToken,
+        'resetTokenExpiry': resetExpiry.toIso8601String(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Tạo thông báo trong app cho user
+      final houseId = userData['houseId'] as String?;
+      if (houseId != null && houseId.isNotEmpty) {
+        await createNotification(
+          recipientUserId: userId,
+          houseId: houseId,
+          title: 'Yêu cầu đặt lại mật khẩu',
+          message: 'Bạn đã yêu cầu đặt lại mật khẩu. Vui lòng liên hệ admin để được hỗ trợ đặt lại mật khẩu mới.',
+          type: 'password_reset',
+          relatedId: userId,
+        );
+      }
+
+      return {
+        'success': true,
+        'message': 'Đã gửi yêu cầu đặt lại mật khẩu. Vui lòng kiểm tra thông báo trong app hoặc liên hệ admin.',
+        'userId': userId,
+        'resetToken': resetToken,
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Lỗi đặt lại mật khẩu: $e',
+      };
+    }
+  }
+
+  /// Verify reset token và đặt lại mật khẩu
+  static Future<Map<String, dynamic>> verifyResetTokenAndUpdatePassword({
+    required String email,
+    required String resetToken,
+    required String newPassword,
+  }) async {
+    try {
+      final query = await _db
+          .collection('users')
+          .where('email', isEqualTo: email.toLowerCase())
+          .get();
+
+      if (query.docs.isEmpty) {
+        return {
+          'success': false,
+          'message': 'Email không tồn tại',
+        };
+      }
+
+      final userDoc = query.docs.first;
+      final userData = userDoc.data();
+      final storedToken = userData['resetToken'] as String?;
+      final tokenExpiryStr = userData['resetTokenExpiry'] as String?;
+
+      if (storedToken == null || storedToken != resetToken) {
+        return {
+          'success': false,
+          'message': 'Token không hợp lệ',
+        };
+      }
+
+      if (tokenExpiryStr == null) {
+        return {
+          'success': false,
+          'message': 'Token đã hết hạn',
+        };
+      }
+
+      final tokenExpiry = DateTime.parse(tokenExpiryStr);
+      if (DateTime.now().isAfter(tokenExpiry)) {
+        return {
+          'success': false,
+          'message': 'Token đã hết hạn (hết hạn sau 24 giờ)',
+        };
+      }
+
+      // Cập nhật mật khẩu mới
+      final hashedPassword = _hashPassword(newPassword);
+      await _db.collection('users').doc(userDoc.id).update({
+        'password': hashedPassword,
+        'resetToken': FieldValue.delete(),
+        'resetTokenExpiry': FieldValue.delete(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      return {
+        'success': true,
+        'message': 'Mật khẩu đã được đặt lại thành công',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Lỗi đặt lại mật khẩu: $e',
+      };
+    }
+  }
 }

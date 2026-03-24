@@ -3,6 +3,7 @@ import '../screens/auth/splash_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/auth/select_house_screen.dart';
+import '../screens/auth/forgot_password_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/leaderboard/leaderboard_screen.dart';
 import '../screens/chores/chores_screen.dart';
@@ -29,6 +30,7 @@ class AppRoutes {
   static const String splash = '/';
   static const String login = '/login';
   static const String register = '/register';
+  static const String forgotPassword = '/forgot-password';
   static const String selectHouse = '/select-house';
   static const String home = '/home';
   static const String chores = '/chores';
@@ -56,6 +58,7 @@ class AppRoutes {
     splash: (context) => const SplashScreen(),
     login: (context) => const LoginScreen(),
     register: (context) => const RegisterScreen(),
+    forgotPassword: (context) => const ForgotPasswordScreen(),
     selectHouse: (context) => const SelectHouseScreen(),
     home: (context) => const HomeScreen(),
     chores: (context) => const ChoresScreen(),
