@@ -20,11 +20,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _houseNameController = TextEditingController();
-  final _joinCodeController = TextEditingController();
   bool _rememberMe = false;
   bool _isLoading = false;
-  bool _isCreatingHouse = true; // true: tạo phòng, false: vào phòng có sẵn
 
   @override
   void dispose() {
@@ -33,8 +30,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _houseNameController.dispose();
-    _joinCodeController.dispose();
     super.dispose();
   }
 
@@ -42,7 +37,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       try {
-        // 1. Đăng ký User qua Firebase
+        // Đăng ký User qua Firebase
         final registerResult = await FirestoreService.registerUser(
           name: _nameController.text.trim(),
           email: _emailController.text.trim(),
@@ -55,115 +50,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
 
         final userData = registerResult['user'] as Map<String, dynamic>;
-        final userId = userData['id'] as String;
 
-        // 2. Tạo hoặc vào phòng
-        if (_isCreatingHouse) {
-          // Tạo phòng mới
-          final houseResult = await FirestoreService.createHouseAndJoin(
-            houseName: _houseNameController.text.trim(),
-            description: 'Phòng của ${_nameController.text}',
-            userId: userId,
+        // Lưu user vào local storage
+        await AuthService.saveUserFirebase(userData);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Đăng ký thành công!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
           );
-
-          if (houseResult['success'] != true) {
-            throw Exception(houseResult['message'] ?? 'Tạo phòng thất bại');
-          }
-
-          // Cập nhật userData với houseId
-          userData['houseId'] = houseResult['houseId'];
-          final joinCode = houseResult['joinCode'] as String;
-
-          // Lưu user vào local storage
-          await AuthService.saveUserFirebase(userData);
-
-          if (mounted) {
-            // Hiện dialog với mã phòng để user copy
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (context) => AlertDialog(
-                title: const Text('Tạo phòng thành công'),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('Chia sẻ mã này với các thành viên khác:'),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF5F5F5),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppColors.primary),
-                      ),
-                      child: SelectableText(
-                        joinCode,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                          letterSpacing: 2,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Phòng: ${_houseNameController.text}',
-                      style: const TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.pushReplacementNamed(context, '/home');
-                    },
-                    child: const Text('Vào ứng dụng'),
-                  ),
-                ],
-              ),
-            );
-          }
-        } else {
-          // Vào phòng có sẵn
-          final joinResult = await FirestoreService.joinHouseByCode(
-            joinCode: _joinCodeController.text.trim().toUpperCase(),
-            userId: userId,
-          );
-
-          if (joinResult['success'] != true) {
-            throw Exception(joinResult['message'] ?? 'Vào phòng thất bại');
-          }
-
-          // Cập nhật userData với houseId
-          userData['houseId'] = joinResult['houseId'];
-          await AuthService.saveUserFirebase(userData);
-
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Vào phòng thành công'),
-                backgroundColor: Colors.green,
-                duration: Duration(seconds: 2),
-              ),
-            );
-            Navigator.pushReplacementNamed(context, '/home');
-          }
+          Navigator.pushReplacementNamed(context, '/select-house');
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content:
-                  Text('Lỗi: ${e.toString().replaceAll('Exception: ', '')}'),
+              content: Text('Lỗi: $e'),
               backgroundColor: Colors.red,
-              duration: const Duration(seconds: 3),
             ),
           );
-          setState(() => _isLoading = false);
         }
+      } finally {
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -211,53 +122,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               children: [
                 const SizedBox(height: 30),
                 // Logo
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: AppColors.primary,
-                          width: 3,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'HP',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'HousePal',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          'Quản lý SỐNG CHUNG THÔNG MINH',
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppColors.primary,
-                            fontSize: 9,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                Image.asset(
+                  'img/logo.png',
+                  width: 200,
+                  height: 150,
+                  fit: BoxFit.contain,
                 ),
                 const SizedBox(height: 40),
                 // Title
@@ -313,103 +182,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
-                // Toggle: Tạo phòng vs Vào phòng
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFFE0E0E0)),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => setState(() => _isCreatingHouse = true),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            decoration: BoxDecoration(
-                              color: _isCreatingHouse
-                                  ? AppColors.primary
-                                  : Colors.transparent,
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(8),
-                                bottomLeft: Radius.circular(8),
-                              ),
-                            ),
-                            child: Center(
-                              child: Text(
-                                'Tạo Phòng',
-                                style: TextStyle(
-                                  color: _isCreatingHouse
-                                      ? Colors.white
-                                      : AppColors.textPrimary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => setState(() => _isCreatingHouse = false),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            decoration: BoxDecoration(
-                              color: !_isCreatingHouse
-                                  ? AppColors.primary
-                                  : Colors.transparent,
-                              borderRadius: const BorderRadius.only(
-                                topRight: Radius.circular(8),
-                                bottomRight: Radius.circular(8),
-                              ),
-                            ),
-                            child: Center(
-                              child: Text(
-                                'Vào Phòng',
-                                style: TextStyle(
-                                  color: !_isCreatingHouse
-                                      ? Colors.white
-                                      : AppColors.textPrimary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Conditional: Tạo phòng input
-                if (_isCreatingHouse)
-                  CustomInput(
-                    hintText: 'Tên phòng/căn hộ',
-                    controller: _houseNameController,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Vui lòng nhập tên phòng';
-                      }
-                      return null;
-                    },
-                  )
-                else
-                  // Vào phòng input
-                  CustomInput(
-                    hintText: 'Nhập mã phòng',
-                    controller: _joinCodeController,
-                    textInputAction: TextInputAction.next,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Vui lòng nhập mã phòng';
-                      }
-                      if (value.length < 6) {
-                        return 'Mã phòng không hợp lệ';
-                      }
-                      return null;
-                    },
-                  ),
                 const SizedBox(height: 16),
                 // Password Input
                 CustomInput(

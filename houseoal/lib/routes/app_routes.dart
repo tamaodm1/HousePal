@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../screens/auth/splash_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
+import '../screens/auth/select_house_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/leaderboard/leaderboard_screen.dart';
 import '../screens/chores/chores_screen.dart';
@@ -20,11 +21,15 @@ import '../screens/bulletin/add_shopping_item_screen.dart';
 import '../screens/notifications/notifications_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/settings/profile_info_screen.dart';
+import '../screens/chat/chat_screen.dart';
+import '../screens/feed/feed_screen.dart';
+import '../screens/feed/create_post_screen.dart';
 
 class AppRoutes {
   static const String splash = '/';
   static const String login = '/login';
   static const String register = '/register';
+  static const String selectHouse = '/select-house';
   static const String home = '/home';
   static const String chores = '/chores';
   static const String choresDetail = '/chores-detail';
@@ -43,11 +48,15 @@ class AppRoutes {
   static const String notifications = '/notifications';
   static const String settings = '/settings';
   static const String profileInfo = '/profile-info';
+  static const String chat = '/chat';
+  static const String feed = '/feed';
+  static const String createPost = '/create-post';
 
   static Map<String, WidgetBuilder> routes = {
     splash: (context) => const SplashScreen(),
     login: (context) => const LoginScreen(),
     register: (context) => const RegisterScreen(),
+    selectHouse: (context) => const SelectHouseScreen(),
     home: (context) => const HomeScreen(),
     chores: (context) => const ChoresScreen(),
     choresDetail: (context) => const ChoresDetailScreen(),
@@ -66,6 +75,9 @@ class AppRoutes {
     notifications: (context) => const NotificationsScreen(),
     settings: (context) => const SettingsScreen(),
     profileInfo: (context) => const ProfileInfoScreen(),
+    chat: (context) => const ChatScreen(),
+    feed: (context) => const FeedScreen(),
+    createPost: (context) => const CreatePostScreen(),
   };
 
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {

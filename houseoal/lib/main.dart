@@ -1,9 +1,22 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
 import 'core/constants/colors.dart';
 import 'routes/app_routes.dart';
+import 'services/push_service.dart';
+
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  await PushService.showNotificationFromData(
+    title: message.notification?.title ?? 'HousePal',
+    body: message.notification?.body ?? '',
+  );
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,6 +26,13 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // Init push and local notifications (skip on web to avoid dart:io/platform issue)
+  if (!kIsWeb) {
+    await PushService.initialize();
+  }
+
   // Set status bar style
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(

@@ -22,7 +22,13 @@ class _SplashScreenState extends State<SplashScreen> {
     final isLoggedIn = await AuthService.isUserLoggedIn();
     if (!mounted) return;
     if (isLoggedIn) {
-      Navigator.pushReplacementNamed(context, '/home');
+      // Kiểm tra xem user đã có houseId chưa
+      final userData = await AuthService.getFirebaseUser();
+      if (userData != null && userData['houseId'] != null) {
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        Navigator.pushReplacementNamed(context, '/select-house');
+      }
     }
   }
 
@@ -36,10 +42,7 @@ class _SplashScreenState extends State<SplashScreen> {
           child: Column(
             children: [
               const Spacer(),
-              // Illustration
-              const SizedBox(),
-              const SizedBox(height: 40),
-              // Logo & Title
+              // Welcome text
               Text(
                 'Chào mừng đã đến với',
                 style: AppTextStyles.bodyMedium.copyWith(
@@ -47,72 +50,39 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: AppColors.primary,
-                        width: 3,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'HP',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'HousePal',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 8),
+              // Logo
+              Image.asset(
+                'img/logo.png',
+                width: 250,
+                height: 180,
+                fit: BoxFit.contain,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
+              // Description
               Text(
                 'Giải pháp toàn diện để quản lý nhà trọ/chung cư',
-                style: AppTextStyles.bodyMedium.copyWith(
+                style: AppTextStyles.bodySmall.copyWith(
                   color: AppColors.textPrimary,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
+              // Taglines
               RichText(
                 textAlign: TextAlign.center,
                 text: TextSpan(
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textPrimary,
+                    color: AppColors.primary,
                     height: 1.5,
+                    fontWeight: FontWeight.w600,
                   ),
                   children: const [
                     TextSpan(
                       text: 'Chuyên nghiệp - tự động hóa\n',
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
                     ),
                     TextSpan(
                       text: 'Tiết kiệm - linh hoạt',
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
                     ),
                   ],
                 ),

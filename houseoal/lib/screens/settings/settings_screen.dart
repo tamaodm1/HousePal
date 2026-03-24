@@ -28,6 +28,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String? _userId;
   String _joinCode = '';
   List<Map<String, dynamic>> _members = [];
+  List<Map<String, dynamic>> _pendingRequests = [];
 
   @override
   void initState() {
@@ -47,6 +48,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       final house = await FirestoreService.getHouseById(_houseId!);
       final members = await FirestoreService.getHouseMembers(_houseId!);
+      final pendingRequests = _isAdmin ? await FirestoreService.getPendingJoinRequests(_houseId!) : <Map<String, dynamic>>[];
 
       _isAdmin = (house?['ownerId'] ?? '') == _userId;
       _houseNameController.text = (house?['name'] ?? '').toString();
@@ -63,6 +65,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       setState(() {
         _members = members;
+        _pendingRequests = pendingRequests;
         _isLoading = false;
       });
     } catch (e) {
@@ -142,6 +145,58 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Bạn đã rời khỏi phòng')),
     );
+  }
+
+  Future<void> _approveJoinRequest(String requestId, String userId) async {
+    if (_houseId == null || _userId == null) return;
+    
+    try {
+      await FirestoreService.approveJoinRequest(
+        houseId: _houseId!,
+        requestId: requestId,
+        userId: userId,
+        adminId: _userId!,
+      );
+      
+      _loadData(); // Reload data
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đã duyệt yêu cầu tham gia')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _rejectJoinRequest(String requestId, String userId) async {
+    if (_houseId == null || _userId == null) return;
+    
+    try {
+      await FirestoreService.rejectJoinRequest(
+        houseId: _houseId!,
+        requestId: requestId,
+        userId: userId,
+        adminId: _userId!,
+      );
+      
+      _loadData(); // Reload data
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đã từ chối yêu cầu tham gia')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -235,6 +290,68 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
+
+                  // Pending Join Requests Section (for admins only)
+                  if (_isAdmin && _pendingRequests.isNotEmpty) ...[
+                    Text(
+                      'Yêu cầu tham gia (${_pendingRequests.length})',
+                      style: AppTextStyles.h4.copyWith(fontSize: 16),
+                    ),
+                    const SizedBox(height: 12),
+                    ...(_pendingRequests.map((request) {
+                      final userId = request['userId'] ?? '';
+                      final userName = request['userName'] ?? 'Người dùng';
+                      final requestId = request['id'] ?? '';
+                      
+                      return Container(
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.05),
+                          border: Border.all(color: Colors.blue.withOpacity(0.2)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(userName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  Text(request['email'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                                ],
+                              ),
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ElevatedButton.icon(
+                                  icon: const Icon(Icons.check, size: 18),
+                                  label: const Text('Duyệt'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  ),
+                                  onPressed: () => _approveJoinRequest(requestId, userId),
+                                ),
+                                const SizedBox(width: 8),
+                                ElevatedButton.icon(
+                                  icon: const Icon(Icons.close, size: 18),
+                                  label: const Text('Từ chối'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red,
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  ),
+                                  onPressed: () => _rejectJoinRequest(requestId, userId),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList()),
+                    const SizedBox(height: 24),
+                  ],
 
                   // Members Section
                   Row(

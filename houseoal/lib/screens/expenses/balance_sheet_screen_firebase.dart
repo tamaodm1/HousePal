@@ -330,16 +330,16 @@ class _BalanceSheetScreenState extends State<BalanceSheetScreen> {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: cardColor),
                   ),
                   const SizedBox(height: 4),
-                  if (isDebtToYou || isYouOwe)
+                  if (isDebtToYou) // Chỉ creditor mới thấy nút xác nhận
                     ElevatedButton(
                       onPressed: () => _showSettleDialog(debt),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         backgroundColor: cardColor,
                       ),
-                      child: Text(
-                        isDebtToYou ? 'Xác nhận' : 'Đã trả',
-                        style: const TextStyle(fontSize: 11, color: Colors.white),
+                      child: const Text(
+                        'Xác nhận',
+                        style: TextStyle(fontSize: 11, color: Colors.white),
                       ),
                     ),
                 ],
@@ -363,11 +363,7 @@ class _BalanceSheetScreenState extends State<BalanceSheetScreen> {
           children: [
             Text('Số tiền: ${_formatMoney(amount)}đ', style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Text(
-              debt['debtorId'] == currentUserId
-                  ? 'Bạn đã trả cho ${debt['creditorName']}?'
-                  : '${debt['debtorName']} đã trả cho bạn?',
-            ),
+            Text('${debt['debtorName']} đã trả cho bạn?'),
           ],
         ),
         actions: [

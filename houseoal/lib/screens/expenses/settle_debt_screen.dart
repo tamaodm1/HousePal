@@ -68,16 +68,13 @@ class _SettleDebtScreenState extends State<SettleDebtScreen> {
 
   Future<void> _confirmSettle(Map<String, dynamic> debt) async {
     final amount = (debt['amount'] as num?)?.toDouble() ?? 0;
-    final isYouDebtor = debt['debtorId'] == _userId;
 
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Xác nhận thanh toán'),
         content: Text(
-          isYouDebtor
-              ? 'Bạn xác nhận đã trả ${_money(amount)}đ cho ${debt['creditorName']}?'
-              : 'Bạn xác nhận đã nhận ${_money(amount)}đ từ ${debt['debtorName']}?',
+          'Bạn xác nhận đã nhận ${_money(amount)}đ từ ${debt['debtorName']}?',
         ),
         actions: [
           TextButton(
@@ -160,11 +157,11 @@ class _SettleDebtScreenState extends State<SettleDebtScreen> {
                                   ],
                                 ),
                               ),
-                              ElevatedButton(
-                                onPressed: () => _confirmSettle(debt),
-                                child:
-                                    Text(isYouDebtor ? 'Đã trả' : 'Xác nhận'),
-                              ),
+                              if (!isYouDebtor) // Chỉ creditor mới thấy nút xác nhận
+                                ElevatedButton(
+                                  onPressed: () => _confirmSettle(debt),
+                                  child: const Text('Xác nhận'),
+                                ),
                             ],
                           ),
                         );

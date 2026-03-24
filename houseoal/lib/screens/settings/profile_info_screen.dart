@@ -247,11 +247,12 @@ class _ProfileInfoScreenState extends State<ProfileInfoScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Thông tin người dùng'),
+        backgroundColor: AppColors.primary,
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: AppColors.primary,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: Colors.grey,
+          indicatorColor: Colors.white,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
           tabs: const [
             Tab(text: 'Thông tin'),
             Tab(text: 'Đổi mật khẩu'),

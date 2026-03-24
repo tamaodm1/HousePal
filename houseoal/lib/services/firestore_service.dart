@@ -1314,20 +1314,170 @@ class FirestoreService {
 
     final house = query.docs.first;
     final houseData = house.data();
+    final houseId = house.id;
+    
+    // Check if user is already a member or has a pending request
+    final existingRequest = await _db
+        .collection('houses')
+        .doc(houseId)
+        .collection('joinRequests')
+        .where('userId', isEqualTo: userId)
+        .get();
+    
+    if (existingRequest.docs.isNotEmpty) {
+      return {
+        'success': false,
+        'message': 'Bạn đã gửi yêu cầu tham gia phòng này rồi',
+      };
+    }
 
-    // Cập nhật houseId cho user
-    await updateUserHouse(userId, house.id);
-
-    // Tăng memberCount
-    await _db.collection('houses').doc(house.id).update({
-      'memberCount': FieldValue.increment(1),
+    // Create a pending join request
+    final userData = await getUserById(userId);
+    await _db
+        .collection('houses')
+        .doc(houseId)
+        .collection('joinRequests')
+        .add({
+      'userId': userId,
+      'userName': userData?['name'] ?? 'Người dùng',
+      'email': userData?['email'] ?? '',
+      'status': 'pending', // pending, approved, rejected
+      'requestedAt': DateTime.now(),
+      'approvedBy': '',
+      'approvedAt': '',
     });
+
+    // Notify house admin
+    final owner = await getUserById(houseData['ownerId'] ?? '');
+    if (owner != null) {
+      await createNotification(
+        recipientUserId: houseData['ownerId'] ?? '',
+        houseId: houseId,
+        title: 'Yêu cầu tham gia phòng',
+        message: '${userData?['name'] ?? 'Người dùng'} muốn tham gia phòng ${houseData['name']}',
+        type: 'join_request',
+        relatedId: houseId,
+      );
+    }
 
     return {
       'success': true,
-      'houseId': house.id,
-      ...houseData,
+      'message': 'Yêu cầu tham gia đã được gửi. Vui lòng chờ admin duyệt.',
+      'isPending': true,
     };
+  }
+
+  /// Get pending join requests for a house (for admin)
+  static Future<List<Map<String, dynamic>>> getPendingJoinRequests(String houseId) async {
+    try {
+      final snapshot = await _db
+          .collection('houses')
+          .doc(houseId)
+          .collection('joinRequests')
+          .where('status', isEqualTo: 'pending')
+          .orderBy('requestedAt', descending: true)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => {'id': doc.id, ...doc.data()} as Map<String, dynamic>)
+          .toList() as List<Map<String, dynamic>>;
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /// Approve a join request
+  static Future<Map<String, dynamic>> approveJoinRequest({
+    required String houseId,
+    required String requestId,
+    required String userId,
+    required String adminId,
+  }) async {
+    try {
+      // Update request status
+      await _db
+          .collection('houses')
+          .doc(houseId)
+          .collection('joinRequests')
+          .doc(requestId)
+          .update({
+        'status': 'approved',
+        'approvedBy': adminId,
+        'approvedAt': DateTime.now(),
+      });
+
+      // Add user to house
+      await updateUserHouse(userId, houseId);
+
+      // Increment member count
+      await _db.collection('houses').doc(houseId).update({
+        'memberCount': FieldValue.increment(1),
+      });
+
+      // Notify user
+      final userData = await getUserById(userId);
+      final houseData = await getHouseById(houseId);
+      
+      if (userData != null) {
+        await createNotification(
+          recipientUserId: userId,
+          houseId: houseId,
+          title: 'Yêu cầu được duyệt',
+          message: 'Bạn đã được phê duyệt tham gia phòng ${houseData?['name'] ?? 'phòng'}',
+          type: 'join_approved',
+          relatedId: houseId,
+        );
+      }
+
+      return {
+        'success': true,
+        'message': 'Đã duyệt yêu cầu tham gia',
+        'houseId': houseId,
+      };
+    } catch (e) {
+      throw Exception('Lỗi duyệt yêu cầu: $e');
+    }
+  }
+
+  /// Reject a join request
+  static Future<Map<String, dynamic>> rejectJoinRequest({
+    required String houseId,
+    required String requestId,
+    required String userId,
+    required String adminId,
+  }) async {
+    try {
+      // Update request status
+      await _db
+          .collection('houses')
+          .doc(houseId)
+          .collection('joinRequests')
+          .doc(requestId)
+          .update({
+        'status': 'rejected',
+        'approvedBy': adminId,
+        'approvedAt': DateTime.now(),
+      });
+
+      // Notify user
+      final houseData = await getHouseById(houseId);
+      
+      await createNotification(
+        recipientUserId: userId,
+        houseId: houseId,
+        title: 'Yêu cầu bị từ chối',
+        message: 'Yêu cầu tham gia phòng ${houseData?['name'] ?? 'phòng'} đã bị từ chối',
+        type: 'join_rejected',
+        relatedId: houseId,
+      );
+
+      return {
+        'success': true,
+        'message': 'Đã từ chối yêu cầu tham gia',
+      };
+    } catch (e) {
+      throw Exception('Lỗi từ chối yêu cầu: $e');
+    }
   }
 
   static String _generateJoinCode() {

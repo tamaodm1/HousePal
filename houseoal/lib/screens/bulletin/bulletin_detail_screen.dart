@@ -320,8 +320,10 @@ class _BulletinDetailScreenState extends State<BulletinDetailScreen> {
     final title = note['title'] ?? 'Ghi chú';
     final content = note['content'] ?? '';
     final authorName = note['authorName'] ?? 'Unknown';
+    final createdBy = note['createdBy'] ?? '';
     final isPinned = note['isPinned'] == true;
     final noteId = note['id'] as String?;
+    final canDelete = noteId != null && (createdBy == currentUserId || createdBy == null);
     
     return Container(
       padding: const EdgeInsets.all(16),
@@ -358,12 +360,20 @@ class _BulletinDetailScreenState extends State<BulletinDetailScreen> {
               Expanded(
                 child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
-              if (noteId != null)
-                IconButton(
-                  icon: const Icon(Icons.delete, size: 18, color: Colors.red),
-                  onPressed: () => _deleteNote(noteId),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
+              if (canDelete)
+                PopupMenuButton(
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      child: Row(
+                        children: [
+                          const Icon(Icons.delete, size: 18, color: Colors.red),
+                          const SizedBox(width: 8),
+                          const Text('Xóa'),
+                        ],
+                      ),
+                      onTap: () => _deleteNote(noteId!),
+                    ),
+                  ],
                 ),
             ],
           ),

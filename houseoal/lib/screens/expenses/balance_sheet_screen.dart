@@ -187,12 +187,15 @@ class _BalanceSheetScreenState extends State<BalanceSheetScreen> {
     final netBalance = totalOwed - totalOwes;
     
     return Container(
-      padding: const EdgeInsets.all(16),
+      constraints: const BoxConstraints(minHeight: 160),
+      padding: const EdgeInsets.all(20),
+      clipBehavior: Clip.none,
       decoration: BoxDecoration(
         color: AppColors.primary,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
@@ -203,7 +206,7 @@ class _BalanceSheetScreenState extends State<BalanceSheetScreen> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -214,7 +217,7 @@ class _BalanceSheetScreenState extends State<BalanceSheetScreen> {
                     'Bạn nợ',
                     style: TextStyle(color: Colors.black54, fontSize: 12),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
                   Text(
                     '${_formatMoney(totalOwes)}đ',
                     style: const TextStyle(
@@ -232,7 +235,7 @@ class _BalanceSheetScreenState extends State<BalanceSheetScreen> {
                     'Người khác nợ bạn',
                     style: TextStyle(color: Colors.black54, fontSize: 12),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
                   Text(
                     '${_formatMoney(totalOwed)}đ',
                     style: const TextStyle(
@@ -245,9 +248,9 @@ class _BalanceSheetScreenState extends State<BalanceSheetScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           const Divider(color: Colors.black26),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -271,96 +274,104 @@ class _BalanceSheetScreenState extends State<BalanceSheetScreen> {
   }
 
   Widget _buildDebtList() {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: debts.length,
-      itemBuilder: (context, index) {
-        final debt = debts[index];
-        final isDebtToYou = debt['creditorId'] == currentUserId;
-        final isYouOwe = debt['debtorId'] == currentUserId;
-        final amount = (debt['amount'] as num?)?.toDouble() ?? 0;
+    return Column(
+      children: List.generate(
+        debts.length,
+        (index) {
+          final debt = debts[index];
+          final isDebtToYou = debt['creditorId'] == currentUserId;
+          final isYouOwe = debt['debtorId'] == currentUserId;
+          final amount = (debt['amount'] as num?)?.toDouble() ?? 0;
 
-        Color cardColor;
-        IconData iconData;
-        String titleText;
+          Color cardColor;
+          IconData iconData;
+          String titleText;
 
-        if (isDebtToYou) {
-          cardColor = const Color(0xFF4CAF50);
-          iconData = Icons.arrow_downward;
-          titleText = '${debt['debtorName']} nợ bạn';
-        } else if (isYouOwe) {
-          cardColor = const Color(0xFFD32F2F);
-          iconData = Icons.arrow_upward;
-          titleText = 'Bạn nợ ${debt['creditorName']}';
-        } else {
-          cardColor = Colors.orange;
-          iconData = Icons.swap_horiz;
-          titleText = '${debt['debtorName']} nợ ${debt['creditorName']}';
-        }
+          if (isDebtToYou) {
+            cardColor = const Color(0xFF4CAF50);
+            iconData = Icons.arrow_downward;
+            titleText = '${debt['debtorName']} nợ bạn';
+          } else if (isYouOwe) {
+            cardColor = const Color(0xFFD32F2F);
+            iconData = Icons.arrow_upward;
+            titleText = 'Bạn nợ ${debt['creditorName']}';
+          } else {
+            cardColor = Colors.orange;
+            iconData = Icons.swap_horiz;
+            titleText = '${debt['debtorName']} nợ ${debt['creditorName']}';
+          }
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: cardColor.withOpacity(0.2),
-                  shape: BoxShape.circle,
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(18),
+            constraints: const BoxConstraints(minHeight: 90),
+            clipBehavior: Clip.none,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: cardColor.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(child: Icon(iconData, color: cardColor)),
                 ),
-                child: Center(child: Icon(iconData, color: cardColor)),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(titleText, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, height: 1.4)),
+                      const SizedBox(height: 6),
+                      Text(debt['description'] ?? 'Chi tiêu dùng chung', style: AppTextStyles.caption),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(titleText, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 4),
-                    Text(debt['description'] ?? 'Chi tiêu dùng chung', style: AppTextStyles.caption),
+                    Text(
+                      '${_formatMoney(amount)}đ',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: cardColor),
+                    ),
+                    const SizedBox(height: 6),
+                    if (isDebtToYou) // Chỉ creditor mới thấy nút xác nhận
+                      ElevatedButton(
+                        onPressed: () => _showSettleDialog(debt),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          backgroundColor: cardColor,
+                        ),
+                        child: const Text(
+                          'Xác nhận',
+                          style: TextStyle(fontSize: 11, color: Colors.white),
+                        ),
+                      ),
                   ],
                 ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '${_formatMoney(amount)}đ',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: cardColor),
-                  ),
-                  const SizedBox(height: 4),
-                  if (isDebtToYou || isYouOwe)
-                    ElevatedButton(
-                      onPressed: () => _showSettleDialog(debt),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        backgroundColor: cardColor,
-                      ),
-                      child: Text(
-                        isDebtToYou ? 'Xác nhận' : 'Đã trả',
-                        style: const TextStyle(fontSize: 11, color: Colors.white),
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
   Widget _buildSimplifiedDebtCard() {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
+      clipBehavior: Clip.none,
       decoration: BoxDecoration(
         color: Colors.indigo.withOpacity(0.07),
         borderRadius: BorderRadius.circular(12),
@@ -375,18 +386,18 @@ class _BalanceSheetScreenState extends State<BalanceSheetScreen> {
               SizedBox(width: 8),
               Text(
                 'Gợi ý thanh toán tối giản',
-                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo),
+                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo, fontSize: 14),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           ...simplifiedDebts.map((d) {
             final amount = (d['amount'] as num?)?.toDouble() ?? 0;
             return Padding(
-              padding: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.only(bottom: 8),
               child: Text(
                 '• ${d['debtorName']} → ${d['creditorName']}: ${_formatMoney(amount)}đ',
-                style: const TextStyle(fontSize: 13),
+                style: const TextStyle(fontSize: 13, height: 1.5),
               ),
             );
           }),
@@ -407,11 +418,7 @@ class _BalanceSheetScreenState extends State<BalanceSheetScreen> {
           children: [
             Text('Số tiền: ${_formatMoney(amount)}đ', style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Text(
-              debt['debtorId'] == currentUserId
-                  ? 'Bạn đã trả cho ${debt['creditorName']}?'
-                  : '${debt['debtorName']} đã trả cho bạn?',
-            ),
+            Text('${debt['debtorName']} đã trả cho bạn?'),
           ],
         ),
         actions: [

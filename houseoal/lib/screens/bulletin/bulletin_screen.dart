@@ -48,8 +48,9 @@ class _BulletinScreenState extends State<BulletinScreen>
       }
 
       final notesData = await FirestoreService.getNotesByHouse(houseId);
-      final shoppingData = await FirestoreService.getShoppingItemsByHouse(houseId);
-      
+      final shoppingData =
+          await FirestoreService.getShoppingItemsByHouse(houseId);
+
       setState(() {
         notes = notesData;
         shoppingList = shoppingData;
@@ -159,8 +160,10 @@ class _BulletinScreenState extends State<BulletinScreen>
   }
 
   Widget _buildNotesTab() {
-    final pinnedNotes = notes.where((note) => note['isPinned'] == true).toList();
-    final regularNotes = notes.where((note) => note['isPinned'] != true).toList();
+    final pinnedNotes =
+        notes.where((note) => note['isPinned'] == true).toList();
+    final regularNotes =
+        notes.where((note) => note['isPinned'] != true).toList();
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -336,7 +339,7 @@ class _BulletinScreenState extends State<BulletinScreen>
                       ),
                     ),
                     IconButton(
-                      onPressed: () {},
+                      onPressed: () => _showNoteOptions(note),
                       icon: const Icon(
                         Icons.more_vert,
                         size: 20,
@@ -372,7 +375,8 @@ class _BulletinScreenState extends State<BulletinScreen>
                         );
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(6),
@@ -393,7 +397,9 @@ class _BulletinScreenState extends State<BulletinScreen>
                       radius: 12,
                       backgroundColor: AppColors.primary.withOpacity(0.1),
                       child: Text(
-                        (note.createdByName ?? '').isNotEmpty ? (note.createdByName![0]).toUpperCase() : '?',
+                        (note.createdByName ?? '').isNotEmpty
+                            ? (note.createdByName![0]).toUpperCase()
+                            : '?',
                         style: const TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
@@ -463,9 +469,8 @@ class _BulletinScreenState extends State<BulletinScreen>
                 Text(
                   item.name,
                   style: AppTextStyles.bodyMedium.copyWith(
-                    decoration: item.isPurchased
-                        ? TextDecoration.lineThrough
-                        : null,
+                    decoration:
+                        item.isPurchased ? TextDecoration.lineThrough : null,
                     color: item.isPurchased
                         ? AppColors.textSecondary
                         : AppColors.textPrimary,
@@ -499,10 +504,10 @@ class _BulletinScreenState extends State<BulletinScreen>
     final title = note['title'] ?? '';
     final content = note['content'] ?? '';
     final createdByName = note['createdByName'] ?? 'Unknown';
-    final createdAt = note['createdAt'] is DateTime 
-        ? note['createdAt'] as DateTime 
+    final createdAt = note['createdAt'] is DateTime
+        ? note['createdAt'] as DateTime
         : DateTime.now();
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -561,7 +566,9 @@ class _BulletinScreenState extends State<BulletinScreen>
                       radius: 12,
                       backgroundColor: AppColors.primary.withOpacity(0.1),
                       child: Text(
-                        createdByName.isNotEmpty ? createdByName[0].toUpperCase() : '?',
+                        createdByName.isNotEmpty
+                            ? createdByName[0].toUpperCase()
+                            : '?',
                         style: const TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
@@ -615,7 +622,9 @@ class _BulletinScreenState extends State<BulletinScreen>
               Row(
                 children: [
                   Expanded(child: Text(title, style: AppTextStyles.h3)),
-                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+                  IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close)),
                 ],
               ),
               Text('Bởi: $author', style: AppTextStyles.caption),
@@ -635,7 +644,7 @@ class _BulletinScreenState extends State<BulletinScreen>
     final isPurchased = item['isPurchased'] == true;
     final addedByName = item['addedByName'] ?? '';
     final purchasedByName = item['purchasedByName'] ?? '';
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -683,12 +692,16 @@ class _BulletinScreenState extends State<BulletinScreen>
                   name,
                   style: AppTextStyles.bodyMedium.copyWith(
                     decoration: isPurchased ? TextDecoration.lineThrough : null,
-                    color: isPurchased ? AppColors.textSecondary : AppColors.textPrimary,
+                    color: isPurchased
+                        ? AppColors.textSecondary
+                        : AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  isPurchased ? '$purchasedByName đã mua' : '$addedByName đã thêm',
+                  isPurchased
+                      ? '$purchasedByName đã mua'
+                      : '$addedByName đã thêm',
                   style: AppTextStyles.caption,
                 ),
               ],
@@ -765,6 +778,63 @@ class _BulletinScreenState extends State<BulletinScreen>
     }
   }
 
+  void _showNoteOptions(BulletinNote note) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: const Text('Xóa ghi chú',
+                  style: TextStyle(color: Colors.red)),
+              onTap: () {
+                Navigator.pop(context);
+                _deleteNote(note.id.toString());
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deleteNote(String noteId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Xóa ghi chú'),
+        content: const Text('Bạn có chắc muốn xóa ghi chú này?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Xóa', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await FirestoreService.deleteNote(noteId);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ghi chú đã xóa')),
+        );
+        _loadData();
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi: $e')),
+        );
+      }
+    }
+  }
+
   void _showNoteDetail(BulletinNote note) {
     showModalBottomSheet(
       context: context,
@@ -820,7 +890,9 @@ class _BulletinScreenState extends State<BulletinScreen>
                           radius: 16,
                           backgroundColor: AppColors.primary.withOpacity(0.1),
                           child: Text(
-                            (note.createdByName ?? '').isNotEmpty ? (note.createdByName![0]).toUpperCase() : '?',
+                            (note.createdByName ?? '').isNotEmpty
+                                ? (note.createdByName![0]).toUpperCase()
+                                : '?',
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
@@ -860,7 +932,7 @@ class _BulletinScreenState extends State<BulletinScreen>
     final titleController = TextEditingController();
     final contentController = TextEditingController();
     bool isPinned = false;
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -889,7 +961,8 @@ class _BulletinScreenState extends State<BulletinScreen>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Thêm ghi chú mới', style: AppTextStyles.h3),
+                          const Text('Thêm ghi chú mới',
+                              style: AppTextStyles.h3),
                           IconButton(
                             onPressed: () => Navigator.pop(context),
                             icon: const Icon(Icons.close),
@@ -897,19 +970,20 @@ class _BulletinScreenState extends State<BulletinScreen>
                         ],
                       ),
                       const SizedBox(height: 20),
-                      
+
                       // Tiêu đề
                       TextField(
                         controller: titleController,
                         decoration: InputDecoration(
                           labelText: 'Tiêu đề *',
                           hintText: 'Ví dụ: Nhắc nhở quan trọng',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8)),
                           prefixIcon: const Icon(Icons.title),
                         ),
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // Nội dung
                       TextField(
                         controller: contentController,
@@ -917,42 +991,51 @@ class _BulletinScreenState extends State<BulletinScreen>
                         decoration: InputDecoration(
                           labelText: 'Nội dung *',
                           hintText: 'Ghi chú chi tiết...',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8)),
                           prefixIcon: const Icon(Icons.notes),
                         ),
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // Ghim
                       CheckboxListTile(
                         value: isPinned,
-                        onChanged: (v) => setModalState(() => isPinned = v ?? false),
+                        onChanged: (v) =>
+                            setModalState(() => isPinned = v ?? false),
                         title: const Text('Ghim ghi chú'),
-                        subtitle: const Text('Ghi chú quan trọng sẽ hiện lên đầu'),
+                        subtitle:
+                            const Text('Ghi chú quan trọng sẽ hiện lên đầu'),
                         controlAffinity: ListTileControlAffinity.leading,
                         activeColor: AppColors.warning,
                       ),
                       const SizedBox(height: 20),
-                      
+
                       CustomButton(
                         text: 'Thêm ghi chú',
                         onPressed: () async {
-                          if (titleController.text.trim().isEmpty || contentController.text.trim().isEmpty) {
+                          if (titleController.text.trim().isEmpty ||
+                              contentController.text.trim().isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Vui lòng nhập đủ tiêu đề và nội dung')),
+                              const SnackBar(
+                                  content: Text(
+                                      'Vui lòng nhập đủ tiêu đề và nội dung')),
                             );
                             return;
                           }
-                          
+
                           try {
-                            final houseId = await AuthService.getFirebaseHouseId();
-                            final userId = await AuthService.getFirebaseUserId();
-                            final userName = await AuthService.getCurrentUserName();
-                            
+                            final houseId =
+                                await AuthService.getFirebaseHouseId();
+                            final userId =
+                                await AuthService.getFirebaseUserId();
+                            final userName =
+                                await AuthService.getCurrentUserName();
+
                             if (houseId == null || houseId.isEmpty) {
                               throw Exception('Chưa tham gia phòng nào');
                             }
-                            
+
                             await FirestoreService.createNote({
                               'houseId': houseId,
                               'userId': userId,
@@ -961,17 +1044,20 @@ class _BulletinScreenState extends State<BulletinScreen>
                               'createdByName': userName ?? 'Unknown',
                               'isPinned': isPinned,
                             });
-                            
+
                             if (mounted) {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Đã thêm ghi chú!')),
+                                const SnackBar(
+                                    content: Text('Đã thêm ghi chú!')),
                               );
                               _loadData();
                             }
                           } catch (e) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Lỗi: ${e.toString().replaceAll('Exception: ', '')}')),
+                              SnackBar(
+                                  content: Text(
+                                      'Lỗi: ${e.toString().replaceAll('Exception: ', '')}')),
                             );
                           }
                         },
@@ -990,7 +1076,7 @@ class _BulletinScreenState extends State<BulletinScreen>
   void _showAddItemDialog() {
     final nameController = TextEditingController();
     final quantityController = TextEditingController(text: '1');
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1025,59 +1111,63 @@ class _BulletinScreenState extends State<BulletinScreen>
                     ],
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // Tên món
                   TextField(
                     controller: nameController,
                     decoration: InputDecoration(
                       labelText: 'Tên món *',
                       hintText: 'Ví dụ: Sữa, Bánh mì',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
                       prefixIcon: const Icon(Icons.shopping_basket),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Số lượng
                   TextField(
                     controller: quantityController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       labelText: 'Số lượng',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
                       prefixIcon: const Icon(Icons.numbers),
                     ),
                   ),
                   const SizedBox(height: 20),
-                  
+
                   CustomButton(
                     text: 'Thêm món',
                     onPressed: () async {
                       if (nameController.text.trim().isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Vui lòng nhập tên món')),
+                          const SnackBar(
+                              content: Text('Vui lòng nhập tên món')),
                         );
                         return;
                       }
-                      
+
                       try {
                         final houseId = await AuthService.getFirebaseHouseId();
                         final userId = await AuthService.getFirebaseUserId();
                         final userName = await AuthService.getCurrentUserName();
-                        
+
                         if (houseId == null || houseId.isEmpty) {
                           throw Exception('Chưa tham gia phòng nào');
                         }
-                        
+
                         await FirestoreService.createShoppingItem({
                           'houseId': houseId,
                           'name': nameController.text.trim(),
-                          'quantity': int.tryParse(quantityController.text) ?? 1,
+                          'quantity':
+                              int.tryParse(quantityController.text) ?? 1,
                           'addedByUserId': userId,
                           'addedByName': userName ?? 'Unknown',
                           'isPurchased': false,
                         });
-                        
+
                         if (mounted) {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -1087,7 +1177,9 @@ class _BulletinScreenState extends State<BulletinScreen>
                         }
                       } catch (e) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Lỗi: ${e.toString().replaceAll('Exception: ', '')}')),
+                          SnackBar(
+                              content: Text(
+                                  'Lỗi: ${e.toString().replaceAll('Exception: ', '')}')),
                         );
                       }
                     },

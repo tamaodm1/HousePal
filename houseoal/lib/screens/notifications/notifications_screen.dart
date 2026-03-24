@@ -99,7 +99,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               icon: const Icon(Icons.done_all_rounded, size: 18),
               label: const Text('Đọc tất cả'),
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
               ),
             ),
           IconButton(
